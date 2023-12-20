@@ -4,11 +4,11 @@ use tinyvec::SliceVec;
 
 use crate::SectorPoint;
 
-mod slope;
-pub(crate) use slope::*;
-
 mod slope_anchor;
 pub use slope_anchor::*;
+
+mod slope;
+pub(crate) use slope::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(usize)]

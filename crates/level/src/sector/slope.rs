@@ -2,7 +2,7 @@
 
 use tinyvec::SliceVec;
 
-use crate::{to_world_pos, SlopeAnchor, SlopeQuadIterator, SlopeKind};
+use crate::{to_world_pos, SlopeAnchor, SlopeKind, SectorCapIter};
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct SectorSlope {
@@ -31,7 +31,7 @@ impl SectorSlope {
     }
 
     pub fn generate_cap_triangles(&self, len: usize, reverse: bool, out: &mut SliceVec<[usize; 3]>) {
-        for [tri_0, tri_1] in SlopeCapIter::new(self.anchor.to_quad_iter(len), reverse) {
+        for [tri_0, tri_1] in SectorCapIter::new(self.anchor.to_quad_iter(len), reverse) {
             if let Some(tri_0) = tri_0 {
                 out.push(tri_0);
             }
@@ -43,7 +43,7 @@ impl SectorSlope {
     }
 
     pub fn tessslate_cap(&self, points: &[[f32; 3]], reverse: bool, out: &mut SliceVec<[[f32; 3]; 3]>) {
-        for [tri_0, tri_1] in SlopeCapIter::new(self.anchor.to_quad_iter(points.len()), reverse) {
+        for [tri_0, tri_1] in SectorCapIter::new(self.anchor.to_quad_iter(points.len()), reverse) {
             if let Some(tri_0) = tri_0 {
                 out.push(tri_0.map(|i| points[i]));
             }
@@ -56,32 +56,3 @@ impl SectorSlope {
 
 }
 
-pub struct SlopeCapIter {
-    inner: SlopeQuadIterator,
-    reverse: bool,
-}
-
-impl SlopeCapIter {
-    pub fn new(inner: SlopeQuadIterator, reverse: bool) -> Self {
-        Self{inner, reverse}
-    }
-}
-
-impl Iterator for SlopeCapIter {
-    type Item = [Option<[usize; 3]>; 2];
-    fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(
-            |[[idx_00, idx_01], [idx_10, idx_11]]| if self.reverse { 
-                [
-                    (idx_00 != idx_01).then_some([idx_11, idx_01, idx_00]),
-                    (idx_10 != idx_11).then_some([idx_10, idx_11, idx_00])
-                ]
-            } else { 
-                [
-                    (idx_00 != idx_01).then_some([idx_00, idx_01, idx_11]),
-                    (idx_10 != idx_11).then_some([idx_00, idx_11, idx_10])
-                ]
-            }
-        )
-    }
-}
