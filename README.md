@@ -13,9 +13,6 @@ Alternatively it can be found online, here: [GNU AGPLv3](https://www.gnu.org/lic
 
 ## Design
 
-### Limitations
-
-- Sectors must be convex
 - No polygonal models
 
 ### Features
