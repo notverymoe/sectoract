@@ -1,6 +1,5 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
-use crate::{SectorQuadIterator, SectorEdgeIterator};
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct SlopeAnchor(u8);
@@ -31,18 +30,6 @@ impl SlopeAnchor {
             idx,
             if self.is_point() { idx } else { idx + 1 },
         ]
-    }
-
-    pub fn to_slope_iter(&self, len: usize) -> SectorEdgeIterator {
-        SectorEdgeIterator::new(
-            self.index_pair().map(|v| v as isize),
-            (len/2 + if self.is_point() { 1 } else { 0 }) as isize,
-            len as isize,
-        )
-    }
-
-    pub fn to_quad_iter(&self, len: usize) -> SectorQuadIterator {
-        SectorQuadIterator::new(self.to_slope_iter(len))
     }
 
     pub fn to_raw(&self) -> usize {

@@ -1,100 +1,30 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
-pub struct SectorCapIter {
-    inner: SectorQuadIterator,
-    reverse: bool,
-}
+use crate::{Sector, SlopeKind, SectorPoint};
 
-impl SectorCapIter {
-    pub fn new(inner: SectorQuadIterator, reverse: bool) -> Self {
-        Self{inner, reverse}
-    }
-}
+mod cap_slice_iter;
+pub use cap_slice_iter::*;
 
-impl Iterator for SectorCapIter {
-    type Item = [Option<[usize; 3]>; 2];
-    fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(
-            |[[idx_00, idx_01], [idx_10, idx_11]]| if self.reverse { 
-                [
-                    (idx_00 != idx_01).then_some([idx_11, idx_01, idx_00]),
-                    (idx_10 != idx_11).then_some([idx_10, idx_11, idx_00])
-                ]
-            } else { 
-                [
-                    (idx_00 != idx_01).then_some([idx_00, idx_01, idx_11]),
-                    (idx_10 != idx_11).then_some([idx_00, idx_11, idx_10])
-                ]
-            }
-        )
-    }
-}
+mod cap_tess_iter;
+pub use cap_tess_iter::*;
+use tinyvec::SliceVec;
 
-
-#[derive(Debug, Default, Clone, Copy)]
-pub struct SectorQuadIterator {
-    inner: SectorEdgeIterator
-}
-
-impl SectorQuadIterator {
-
-    pub fn new(inner: SectorEdgeIterator) -> Self {
-        Self{inner}
+pub fn tesselate_sector_cap(
+    sector: &Sector, 
+    kind: Option<SlopeKind>, 
+    buffer_points: &mut SliceVec<[f32; 3]>, 
+    buffer_index: &mut SliceVec<[usize; 3]>
+) {
+    // Add points
+    let points_start = buffer_points.len();
+    buffer_points.extend(sector.points.iter().map(SectorPoint::to_world));
+    if let Some(kind) = kind {
+        sector.slope.apply_to(&mut buffer_points[points_start..], kind);
     }
 
-}
-
-impl Iterator for SectorQuadIterator {
-    type Item = [[usize; 2]; 2];
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if let (Some(next), Some(peek)) = (self.inner.next(), self.inner.peek()) {
-            return Some([next, peek]);
-        }
-        None
-    }
-}
-
-
-#[derive(Debug, Default, Clone, Copy)]
-pub struct SectorEdgeIterator {
-    start: [isize; 2],
-    offset:     isize,
-    offset_max: isize,
-    index_max:  isize,
-}
-
-impl SectorEdgeIterator {
-
-    pub fn new(start: [isize; 2], offset_max: isize, index_max: isize) -> Self {
-        Self { start, offset: 0, offset_max, index_max }
-    }
-
-    pub fn len(&self) -> usize {
-        self.offset_max as usize
-    }
-
-    pub fn peek(&self) -> Option<[usize; 2]> {
-        if self.offset >= self.offset_max {
-            None
-        }  else {
-            Some([
-                (self.start[0] - self.offset).rem_euclid(self.index_max) as usize,
-                (self.start[1] + self.offset).rem_euclid(self.index_max) as usize,
-            ])
-        }
-    }
-
-}
-
-impl Iterator for SectorEdgeIterator {
-    type Item = [usize; 2];
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let result = self.peek();
-        if result.is_some() {
-            self.offset += 1;
-        }
-        result
+    // Add indicies
+    let points_len = buffer_points.len() - points_start;
+    for tris in CapTessIter::from_anchor(sector.slope.anchor, points_len, kind != Some(SlopeKind::Roof)) {
+        buffer_index.extend(tris.into_iter().flatten().map(|v| v.map(|v| points_start + v)));
     }
 }

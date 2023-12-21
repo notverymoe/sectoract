@@ -2,7 +2,7 @@
 
 use tinyvec::SliceVec;
 
-use crate::{to_world_pos, SlopeAnchor, SlopeKind, SectorCapIter};
+use crate::{to_world_pos, SlopeAnchor, SlopeKind, CapTessIter, CapSliceIter};
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct SectorSlope {
@@ -21,8 +21,8 @@ impl SectorSlope {
         let slope_start  = to_world_pos([0, self.start][kind as usize]);  
         let slope_height = to_world_pos(self.end[kind as usize]);
 
-        let iter      = self.anchor.to_slope_iter(points.len());
-        let slope_inc = slope_height/(iter.len() as f32);
+        let iter      = CapSliceIter::from_anchor(self.anchor, points.len());
+        let slope_inc = slope_height/(iter.count() as f32);
 
         for (offset, [idx_0, idx_1]) in iter.enumerate() {
             points[idx_0][2] = slope_start + slope_inc*(offset as f32);
@@ -31,7 +31,7 @@ impl SectorSlope {
     }
 
     pub fn generate_cap_triangles(&self, len: usize, reverse: bool, out: &mut SliceVec<[usize; 3]>) {
-        for [tri_0, tri_1] in SectorCapIter::new(self.anchor.to_quad_iter(len), reverse) {
+        for [tri_0, tri_1] in CapTessIter::from_anchor(self.anchor, len, reverse) {
             if let Some(tri_0) = tri_0 {
                 out.push(tri_0);
             }
@@ -43,7 +43,7 @@ impl SectorSlope {
     }
 
     pub fn tessslate_cap(&self, points: &[[f32; 3]], reverse: bool, out: &mut SliceVec<[[f32; 3]; 3]>) {
-        for [tri_0, tri_1] in SectorCapIter::new(self.anchor.to_quad_iter(points.len()), reverse) {
+        for [tri_0, tri_1] in CapTessIter::from_anchor(self.anchor, points.len(), reverse) {
             if let Some(tri_0) = tri_0 {
                 out.push(tri_0.map(|i| points[i]));
             }

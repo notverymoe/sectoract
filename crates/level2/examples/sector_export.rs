@@ -15,8 +15,8 @@ pub fn main() {
             SectorPoint::new(-100, 200),
             SectorPoint::new(-100, 100),
         ]),
-        SlopeAnchor::from_edge(0),
         200,
+        SlopeAnchor::from_edge(0),
         [80, -80]
     );
 

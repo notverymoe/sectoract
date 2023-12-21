@@ -24,27 +24,24 @@ pub struct Sector {
 
 impl Sector {
 
-    pub fn new(
-        points: Box<[SectorPoint]>,
-        height: i16,
-    ) -> Self {
+    pub fn new(points: Box<[SectorPoint]>, height: i16) -> Self {
         Self::new_slope(
             points, 
+            height, 
             SlopeAnchor::from_edge(0),
-            height as i16, 
             [0, 0]
         )
     }
 
     pub fn new_slope(
         points: Box<[SectorPoint]>, 
+        height: i16,
         slope_anchor: SlopeAnchor, 
-        slope_start: i16,
         slope_end: [i16; 2]
     ) -> Self {
         Self{
             points,
-            slope: SectorSlope::new(slope_anchor, slope_start, slope_end)
+            slope: SectorSlope::new(slope_anchor, height, slope_end)
         }
     }
 
@@ -66,7 +63,7 @@ impl Sector {
 
     pub fn generate_surface(&self, kind: SlopeKind, buffer_loop: &mut SliceVec<[f32; 3]>, buffer_surface: &mut SliceVec<[[f32; 3]; 3]>) {
         self.generate_wall_loop(Some(kind), buffer_loop);
-        self.slope.tessslate_cap(buffer_loop, kind == SlopeKind::Roof, buffer_surface);
+        self.slope.tessslate_cap(buffer_loop, kind != SlopeKind::Roof, buffer_surface);
     }
     
 }
