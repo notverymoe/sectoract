@@ -7,17 +7,17 @@ pub struct SectorConnectionStack([u16; 2]);
 impl SectorConnectionStack {
 
     #[must_use]
-    pub fn new(lower: u16, upper: u16) -> Self {
+    pub const fn new(lower: u16, upper: u16) -> Self {
         Self([lower, upper])
     }
 
     #[must_use]
-    pub fn lower(&self) -> u16 {
+    pub const fn lower(&self) -> u16 {
         self.0[0]
     }
 
     #[must_use]
-    pub fn upper(&self) -> u16 {
+    pub const fn upper(&self) -> u16 {
         self.0[1]
     }
 

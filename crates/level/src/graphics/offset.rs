@@ -10,7 +10,7 @@ pub struct TextureOffset {
 
 impl TextureOffset {
     #[must_use]
-    pub fn new(x: i16, y: i16) -> Self {
+    pub const fn new(x: i16, y: i16) -> Self {
         Self{x, y}
     }
 

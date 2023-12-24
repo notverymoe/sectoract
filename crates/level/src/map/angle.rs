@@ -8,7 +8,7 @@ pub struct SectorAngle(i16);
 impl SectorAngle {
 
     #[must_use]
-    pub fn new(v: i16) -> Self {
+    pub const fn new(v: i16) -> Self {
         Self(v)
     }
 
