@@ -1,7 +1,6 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
-pub const UNIT_WORLD:   f32 =   8.0;
-pub const UNIT_TEXTURE: f32 = 256.0;
+pub const UNIT_WORLD: f32 =   8.0;
 
 // //
 
@@ -64,20 +63,4 @@ pub fn to_world_pos(v: i16) -> f32 {
 
 pub fn from_world_pos(v: f32) -> i16 {
     (v * UNIT_WORLD) as i16
-}
-
-pub fn to_texture_pos(v: i16) -> f32 {
-    (v as f32)/UNIT_TEXTURE
-}
-
-pub fn from_texture_pos(v: f32) -> i16 {
-    (v * UNIT_TEXTURE) as i16
-}
-
-pub fn to_world_angle(v: u16) -> f32 {
-    std::f32::consts::TAU/(v as f32)
-}
-
-pub fn from_world_angle(v: f32) -> u16 {
-    (std::f32::consts::TAU/v).rem_euclid(u16::MAX as f32) as u16
 }

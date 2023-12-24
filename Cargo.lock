@@ -5,3 +5,11 @@ version = 3
 [[package]]
 name = "level"
 version = "0.1.0"
+dependencies = [
+ "nvm_str_id",
+]
+
+[[package]]
+name = "nvm_str_id"
+version = "0.1.0"
+source = "git+https://github.com/notverymoe/nvm-lib.git?rev=9edf2cf0ac9b124ad55915bb889eb860cf63333c#9edf2cf0ac9b124ad55915bb889eb860cf63333c"
