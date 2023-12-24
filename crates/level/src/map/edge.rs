@@ -14,7 +14,6 @@ pub struct EdgeConnection([EdgeConnectionSide; 2]);
 #[derive(Debug, Clone, Copy)]
 pub struct EdgeConnectionSide {
     pub target: EdgeReference,
-    pub opaque: bool,
     pub height: i16,
     pub screen: Option<TextureFace>,
     pub pillar: Option<TextureFace>,

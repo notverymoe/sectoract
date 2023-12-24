@@ -1,55 +1,31 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
-use crate::graphics::TextureFace;
-
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy)]
-pub struct SectorConnectionStack([SectorConnectionStackSide; 2]);
+pub struct SectorConnectionStack([u16; 2]);
 
 impl SectorConnectionStack {
 
     #[must_use]
-    pub fn new(
-        lower: SectorConnectionStackSide,
-        upper: SectorConnectionStackSide
-    ) -> Self {
+    pub fn new(lower: u16, upper: u16) -> Self {
         Self([lower, upper])
     }
 
     #[must_use]
-    pub fn lower(&self) -> &SectorConnectionStackSide {
-        &self.0[0]
+    pub fn lower(&self) -> u16 {
+        self.0[0]
     }
 
     #[must_use]
-    pub fn upper(&self) -> &SectorConnectionStackSide {
-        &self.0[1]
+    pub fn upper(&self) -> u16 {
+        self.0[1]
     }
 
-    #[must_use]
-    pub fn lower_mut(&mut self) -> &mut SectorConnectionStackSide {
-        &mut self.0[0]
+    pub fn set_lower(&mut self, id: u16) {
+        self.0[0] = id;
     }
 
-    #[must_use]
-    pub fn upper_mut(&mut self) -> &mut SectorConnectionStackSide {
-        &mut self.0[1]
+    pub fn set_upper(&mut self, id: u16) {
+        self.0[1] = id;
     }
 }
-
-#[derive(Debug, Clone, Copy)]
-pub struct SectorConnectionStackSide {
-    pub target: u16,
-    pub opaque: bool,
-    pub screen: Option<TextureFace>,
-}
-
-impl SectorConnectionStackSide {
-
-    #[must_use]
-    pub fn new(target: u16) -> Self {
-        Self{target, opaque: false, screen: None}
-    }
-
-}
-
