@@ -15,5 +15,5 @@ pub use sector::*;
 pub struct Map {
     pub sectors:           Box<[Sector]>,
     pub connection_edge:   Box<[EdgeConnection]>,
-    pub connection_sector: Box<[SectorConnection]>,
+    pub connection_sector: Box<[SectorConnectionStack]>,
 }

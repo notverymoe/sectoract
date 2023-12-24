@@ -14,6 +14,7 @@ pub use offset::*;
 mod scale;
 pub use scale::*;
 
+#[derive(Debug, Clone, Copy)]
 pub struct TextureFace {
     pub id:     TextureID,
     pub offset: TextureOffset,

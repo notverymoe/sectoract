@@ -29,19 +29,22 @@ impl ColourRGBA {
 
 impl ColourRGBA {
 
+    #[must_use]
     pub const fn new(v: u16) -> Self {
         Self(v)
     }
 
+    #[must_use]
     pub const fn from_rgba8(v: u32) -> Self {
         Self::new(
-            (((v & 0xF0000000) >> 12) as u16) |
-            (((v & 0x00F00000) >>  8) as u16) |
-            (((v & 0x0000F000) >>  4) as u16) |
-             ((v & 0x000000F0)        as u16)
+            (((v & 0xF0_00_00_00) >> 12) as u16) |
+            (((v & 0x00_F0_00_00) >>  8) as u16) |
+            (((v & 0x00_00_F0_00) >>  4) as u16) |
+             ((v & 0x00_00_00_F0)        as u16)
         )
     }
 
+    #[must_use]
     pub const fn to_rgba8(self) -> u32 {
         (self.r() as u32) << 24 |
         (self.g() as u32) << 16 |
@@ -49,6 +52,7 @@ impl ColourRGBA {
         (self.a() as u32) 
     }
 
+    #[must_use]
     pub fn from_rgba32(v: [f32; 4]) -> Self {
         Self::new(
             (((v[0] * 16.0) as u16) << 12) |
@@ -58,6 +62,7 @@ impl ColourRGBA {
         )
     }
 
+    #[must_use]
     pub fn to_rgba32(self) -> [f32; 4] {
         [
             (self.r() as f32)/16.0,
@@ -71,18 +76,22 @@ impl ColourRGBA {
 
 impl ColourRGBA {
 
+    #[must_use]
     pub const fn r(&self) -> u8 {
         ((self.0 >> 12) & 0x000F) as u8
     }
 
+    #[must_use]
     pub const fn g(&self) -> u8 {
         ((self.0 >> 8) & 0x000F) as u8
     }
 
+    #[must_use]
     pub const fn b(&self) -> u8 {
         ((self.0 >> 4) & 0x000F) as u8
     }
 
+    #[must_use]
     pub const fn a(&self) -> u8 {
         (self.0 & 0x000F) as u8
     }
@@ -111,18 +120,22 @@ impl ColourRGBA {
         self
     }
 
+    #[must_use]
     pub const fn with_r(self, r: u8) -> Self {
         Self::new((self.0 & 0x0FFF) | (((r & 0x0F) as u16) << 12))
     }
 
+    #[must_use]
     pub const fn with_g(self, g: u8) -> Self {
         Self::new((self.0 & 0xF0FF) | (((g & 0x0F) as u16) << 8))
     }
 
+    #[must_use]
     pub const fn with_b(self, b: u8) -> Self {
         Self::new((self.0 & 0xFF0F) | (((b & 0x0F) as u16) << 4))
     }
 
+    #[must_use]
     pub const fn with_a(self, a: u8) -> Self {
         Self::new((self.0 & 0xFFF0) | ((a & 0x0F) as u16))
     }

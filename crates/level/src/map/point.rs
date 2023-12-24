@@ -12,10 +12,12 @@ pub struct SectorPoint2 {
 
 impl SectorPoint2 {
 
+    #[must_use]
     pub fn new(x: i16, y: i16) -> Self {
         Self{x, y}
     }
 
+    #[must_use]
     pub fn to_world(&self) -> [f32; 3] {
         [
             to_world_pos(self.x),
@@ -24,6 +26,7 @@ impl SectorPoint2 {
         ]
     }
 
+    #[must_use]
     pub fn extend(self, z: i16) -> SectorPoint3 {
         SectorPoint3::new(self.x, self.y, z)
     }
@@ -40,10 +43,12 @@ pub struct SectorPoint3 {
 
 impl SectorPoint3 {
 
+    #[must_use]
     pub fn new(x: i16, y: i16, z: i16) -> Self {
         Self{x, y, z}
     }
 
+    #[must_use]
     pub fn to_world(&self) -> [f32; 3] {
         [
             to_world_pos(self.x),
@@ -52,15 +57,18 @@ impl SectorPoint3 {
         ]
     }
 
+    #[must_use]
     pub fn truncate(self) -> SectorPoint2 {
         SectorPoint2::new(self.x, self.y)
     }
 }
 
+#[must_use]
 pub fn to_world_pos(v: i16) -> f32 {
     (v as f32)/UNIT_WORLD
 }
 
+#[must_use]
 pub fn from_world_pos(v: f32) -> i16 {
     (v * UNIT_WORLD) as i16
 }

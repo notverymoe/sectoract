@@ -1,11 +1,47 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
-pub fn to_world_angle(v: i16) -> f32 {
-    std::f32::consts::TAU/(v as f32)
+use core::f32::consts as f32;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SectorAngle(i16);
+
+impl SectorAngle {
+
+    #[must_use]
+    pub fn new(v: i16) -> Self {
+        Self(v)
+    }
+
+    #[must_use]
+    pub fn from_radians(v: f32) -> Self {
+        Self::new(from_world_angle(v))
+    }
+
+    #[must_use]
+    pub fn from_degrees(v: f32) -> Self {
+        Self::new(from_world_angle(v.to_radians()))
+    }
+
+    #[must_use]
+    pub fn to_radians(&self) -> f32 {
+        to_world_angle(self.0)
+    }
+
+    #[must_use]
+    pub fn to_degrees(&self) -> f32 {
+        to_world_angle(self.0).to_degrees()
+    }
+
 }
 
+#[must_use]
+pub fn to_world_angle(v: i16) -> f32 {
+    f32::TAU/(v as f32)
+}
+
+#[must_use]
 pub fn from_world_angle(v: f32) -> i16 {
-    ((std::f32::consts::TAU/v).rem_euclid(i16::MAX as f32)) as i16
+    ((f32::TAU/v).rem_euclid(i16::MAX as f32)) as i16
 }
 
 #[cfg(test)]
