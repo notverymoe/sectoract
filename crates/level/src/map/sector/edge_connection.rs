@@ -2,6 +2,7 @@
 
 use crate::map::{IdentifierMaterial, IdentifierEdge};
 
+#[derive(Debug, Clone, Copy)]
 #[repr(transparent)]
 pub struct EdgeConnection([EdgeConnectionSide; 2]);
 

@@ -28,6 +28,7 @@ pub struct IdentifierEdge {
     idx_edge:   u16,
 }
 
+#[derive(Debug, Clone)]
 pub struct Map {
     pub sectors:     Vec<Sector>,
     pub nestings:    Vec<SectorNested>,
