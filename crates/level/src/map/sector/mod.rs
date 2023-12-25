@@ -1,28 +1,29 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
-use crate::{graphics::TextureFace, map::SectorPoint2};
+use crate::graphics::LightAmbient;
+
+mod anchor_slice_iter;
+pub use anchor_slice_iter::*;
 
 mod anchor;
 pub use anchor::*;
 
-mod connection_nested;
-pub use connection_nested::*;
+mod edge;
+pub use edge::*;
 
-mod connection_stack;
-pub use connection_stack::*;
+mod edge_connection;
+pub use edge_connection::*;
 
-mod slope;
-pub use slope::*;
+mod nested;
+pub use nested::*;
 
+mod surface;
+pub use surface::*;
+
+#[derive(Debug, Clone)]
 pub struct Sector {
-    pub edge_points:  Box<[SectorPoint2]>,
-    pub edge_texture: Box<[TextureFace ]>,
-
-    pub surface_upper: SectorSurface,
-    pub surface_lower: SectorSurface,
-}
-
-pub struct SectorSurface {
-    pub texture: TextureFace,
-    pub slope:   SectorSlope,
+    pub ambient:  LightAmbient,
+    pub edges:    SectorEdges,
+    pub surfaces: [SectorSurface; 2],
+    pub fluid:    Option<SectorSurface>,
 }

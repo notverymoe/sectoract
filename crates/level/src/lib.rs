@@ -3,7 +3,6 @@
 #![warn(
     clippy::all, 
     clippy::pedantic,
-    clippy::absolute_paths,
     clippy::alloc_instead_of_core,
     clippy::as_underscore,
     clippy::clone_on_ref_ptr,
@@ -15,7 +14,6 @@
     clippy::fn_to_numeric_cast_any,
     clippy::format_push_string,
     clippy::if_then_some_else_none,
-    clippy::missing_trait_methods,
     clippy::mixed_read_write_in_expression,
     clippy::panic_in_result_fn,
     clippy::partial_pub_fields,

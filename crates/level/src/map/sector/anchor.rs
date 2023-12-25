@@ -1,7 +1,6 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
-#[derive(Debug, Default, Clone, Copy)]
-
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct SectorAnchor(u16);
 
 impl SectorAnchor {
@@ -41,15 +40,6 @@ impl SectorAnchor {
             idx,
             if self.is_point() { idx } else { idx + 1 },
         ]
-    }
-
-    #[must_use]
-    pub const fn iter_len(&self, len: usize) -> usize {
-        if self.is_point() { 
-            len/2 + 1 
-        } else { 
-            len/2 
-        }
     }
 
     #[must_use]

@@ -14,9 +14,12 @@ pub use offset::*;
 mod scale;
 pub use scale::*;
 
+mod light;
+pub use light::*;
+
 #[derive(Debug, Clone, Copy)]
-pub struct TextureFace {
-    pub id:     TextureID,
+pub struct MaterialTexture {
+    pub id:     IdentifierTexture,
     pub offset: TextureOffset,
     pub scale:  TextureScale,
     pub anchor: TextureAnchor,
@@ -24,5 +27,5 @@ pub struct TextureFace {
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct TextureID(SmolStr);
+pub struct IdentifierTexture(SmolStr);
 
