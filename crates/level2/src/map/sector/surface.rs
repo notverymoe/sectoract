@@ -1,6 +1,6 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
-use crate::map::{SectorPoint3, SectorAnchor, IdentifierMaterial};
+use crate::map::{SectorAnchor, IdentifierMaterial};
 
 use super::AnchorSliceIter;
 
@@ -12,10 +12,10 @@ pub enum SectorSurface {
 
 impl SectorSurface {
 
-    pub fn apply_heights(&self, points: &mut [SectorPoint3]) -> bool {
+    pub fn resolve_heights(&self, out: &mut [i16]) -> bool {
         match self {
-            SectorSurface::Flat(v)   => v.apply_heights(points),
-            SectorSurface::Sloped(v) => v.apply_heights(points),
+            SectorSurface::Flat(v)   => v.resolve_heights(out),
+            SectorSurface::Sloped(v) => v.resolve_heights(out),
         }
     }
 
@@ -47,10 +47,8 @@ pub struct SectorFlat {
 impl SectorFlat {
 
     #[must_use]
-    pub fn apply_heights(&self, points: &mut [SectorPoint3]) -> bool {
-        for point in points.iter_mut() {
-            point.z = self.height;
-        }
+    pub fn resolve_heights(&self, out: &mut [i16]) -> bool {
+        out.fill(self.height);
         true
     }
 
@@ -72,12 +70,12 @@ pub struct SectorSlope {
 impl SectorSlope {
 
     #[must_use]
-    pub fn apply_heights(&self, points: &mut [SectorPoint3]) -> bool {
-        let iter = AnchorSliceIter::from_anchor(self.anchor, points.len());
+    pub fn resolve_heights(&self, out: &mut [i16]) -> bool {
+        let iter = AnchorSliceIter::from_anchor(self.anchor, out.len());
         if iter.max_iter() == self.slices.len() {
             for (offset, [idx_0, idx_1]) in iter.enumerate() {
-                points[idx_0].z = self.slices[offset];
-                points[idx_1].z = self.slices[offset];
+                out[idx_0] = self.slices[offset];
+                out[idx_1] = self.slices[offset];
             }
             true
         } else {
