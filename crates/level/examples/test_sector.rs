@@ -1,6 +1,6 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
-use sectoract_level::map::{Sector, SectorPoint2, Section, IdentifierPoint, IdentifierSection, SectionSlope, UNIT_WORLD, UNIT_WORLD_INT};
+use sectoract_level::map::{Sector, SectorPoint2, Section, IdentifierPoint, IdentifierSection, SectionSlope, UNIT_WORLD_INT};
 
 mod util;
 
@@ -153,6 +153,6 @@ pub fn main() {
         boundry: IdentifierSection::from(0),
     };
     
-    util::sector_to_svg(&sector, "out.svg");
-    util::sector_to_obj(&sector, "out.obj");
+    util::sector_to_svg(&sector, "test_export_dir/out.svg");
+    util::sector_to_obj(&sector, "test_export_dir/out.obj");
 }

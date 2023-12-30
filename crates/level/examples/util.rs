@@ -1,4 +1,4 @@
-use std::fmt::Write;
+use std::{fmt::Write, path::Path as FSPath};
 
 use sectoract_level::map::{Sector, SectorPoint2, SectionSlope, IdentifierPoint};
 
@@ -19,6 +19,7 @@ pub fn sector_to_obj(sector: &Sector, dest: &str) {
         }
     }
 
+    std::fs::create_dir_all(FSPath::new(dest).parent().unwrap()).unwrap();
     std::fs::write(dest, out).unwrap();
 
 }
@@ -47,14 +48,14 @@ fn get_surface_from_section(flip: bool, points: &[SectorPoint2], edges: &[Identi
     }
 }
 
-pub fn sector_to_svg(sector: &Sector, out: &str) {
+pub fn sector_to_svg(sector: &Sector, dest: &str) {
     polys_to_svg(
         &sector.sections.iter().map(|section| section.edges.iter().map(|&i| sector.points[usize::from(i)].to_world()).collect()).collect(),
-        out
+        dest
     );
 }
 
-pub fn polys_to_svg(polygons: &Vec<Vec<[f32; 2]>>, out: &str) {
+pub fn polys_to_svg(polygons: &Vec<Vec<[f32; 2]>>, dest: &str) {
     
     let mut min = f32::MAX;
     let mut max = f32::MIN;
@@ -85,5 +86,7 @@ pub fn polys_to_svg(polygons: &Vec<Vec<[f32; 2]>>, out: &str) {
 
     let border = (max - min)*0.05;
     document = document.set("viewBox", (min-border, min-border, max+border, max+border));
-    svg::save(out, &document).unwrap();
+
+    std::fs::create_dir_all(FSPath::new(dest).parent().unwrap()).unwrap();
+    svg::save(dest, &document).unwrap();
 }
