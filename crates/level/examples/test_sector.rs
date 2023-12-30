@@ -8,8 +8,8 @@ pub fn main() {
         points: vec![
             // boundry L-shape                    // |--|:1:|:2:|:3:|:4:|
             SectorPoint2::from_world( 0.0,  0.0), // | 0| 0 | - | - | - |
-            SectorPoint2::from_world(10.0,  0.0), // | 1| - | 0 | - | - |
-            SectorPoint2::from_world( 5.0,  5.0), // | 2| 1 | 1 | - | - |
+            SectorPoint2::from_world( 5.0,  0.0), // | 1| 1 | 1 | - | - |
+            SectorPoint2::from_world(10.0,  0.0), // | 2| - | 0 | - | - |
             SectorPoint2::from_world(10.0,  5.0), // | 3| - | 2 | - | - |
             SectorPoint2::from_world( 5.0,  5.0), // | 4| 2 | 3 | - | 1 |
             SectorPoint2::from_world( 5.0, 10.0), // | 5| - | - | 4 | - |
@@ -38,7 +38,7 @@ pub fn main() {
                 edges: vec![
                     IdentifierPoint::from(0),
                     IdentifierPoint::from(1),
-                    //IdentifierPoint::from(2),
+                    IdentifierPoint::from(2),
                     IdentifierPoint::from(3),
                     IdentifierPoint::from(4),
                     IdentifierPoint::from(5),
@@ -55,7 +55,7 @@ pub fn main() {
                 ]),
                 edges: vec![
                     IdentifierPoint::from(0),
-                    IdentifierPoint::from(2),
+                    IdentifierPoint::from(1),
                     IdentifierPoint::from(4),
                     IdentifierPoint::from(7),
                 ]
@@ -154,7 +154,7 @@ pub fn main() {
 
     let mut polygons: Vec<Vec<[f32; 2]>> = Vec::default();
 
-    for section in sector.sections.iter().take(1) {
+    for section in sector.sections.iter()/*/.skip(1).take(1)*/ {
         let points: Vec<[f32; 2]> = section.edges.iter().map(|&i| sector.points[usize::from(i)].to_world()).collect();
         polygons.push(points);
     }
