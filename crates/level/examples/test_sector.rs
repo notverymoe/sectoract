@@ -1,7 +1,8 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
 use sectoract_level::map::{Sector, SectorPoint2, Section, IdentifierPoint, IdentifierSection, SectionSlope};
-use svg::{Document, node::element::{path::Data, Path}};
+
+mod util;
 
 pub fn main() {
     let sector = Sector{
@@ -151,41 +152,6 @@ pub fn main() {
         ],
         boundry: IdentifierSection::from(0),
     };
-
-    let mut polygons: Vec<Vec<[f32; 2]>> = Vec::default();
-
-    for section in sector.sections.iter()/*/.skip(1).take(1)*/ {
-        let points: Vec<[f32; 2]> = section.edges.iter().map(|&i| sector.points[usize::from(i)].to_world()).collect();
-        polygons.push(points);
-    }
-
-    let mut min = f32::MAX;
-    let mut max = f32::MIN;
-
-    let mut document = Document::new();
-    for polygon in polygons {
-        
-        let mut data = Data::new();
-        for (i, &[x, y]) in polygon.iter().enumerate() {
-            min = min.min(x).min(y);
-            max = max.max(x).max(y);
-            if i==0 {
-                data = data.move_to((x, y))
-            } else {
-                data = data.line_to((x, y));
-            }
-        }
-        data = data.close();
-
-        document = document.add(Path::new()
-            .set("fill", "none")
-            .set("stroke", "black")
-            .set("stroke-width", 0.1)
-            .set("d", data)
-        );
-
-    }
-
-    document = document.set("viewBox", (min-2.0, min-2.0, max+2.0, max+2.0));
-    svg::save("out.svg", &document).unwrap();
+    
+    util::sector_to_svg(&sector, "out.png");
 }
