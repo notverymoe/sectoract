@@ -21,11 +21,18 @@ impl SectorPoint2 {
     }
 
     #[must_use]
-    pub fn to_world(&self) -> [f32; 3] {
+    pub fn from_world(x: f32, y: f32) -> Self {
+        Self { 
+            x: from_world_pos(x), 
+            y: from_world_pos(y) 
+        }
+    }
+
+    #[must_use]
+    pub fn to_world(&self) -> [f32; 2] {
         [
             to_world_pos(self.x),
             to_world_pos(self.y),
-            0.0
         ]
     }
 

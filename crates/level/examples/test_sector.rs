@@ -1,33 +1,34 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
 use sectoract_level::map::{Sector, SectorPoint2, Section, IdentifierPoint, IdentifierSection, SectionSlope};
+use svg::{Document, node::element::{path::Data, Path}};
 
 pub fn main() {
     let sector = Sector{
         points: vec![
-            // boundry L-shape         // |--|:1:|:2:|:3:|:4:|
-            SectorPoint2::new( 0,  0), // | 0| 0 | - | - | - |
-            SectorPoint2::new(10,  0), // | 1| - | 0 | - | - |
-            SectorPoint2::new( 5,  5), // | 2| 1 | 1 | - | - |
-            SectorPoint2::new(10,  5), // | 3| - | 2 | - | - |
-            SectorPoint2::new( 5,  5), // | 4| 2 | 3 | - | 1 |
-            SectorPoint2::new( 5, 10), // | 5| - | - | 4 | - |
-            SectorPoint2::new( 0, 10), // | 6| - | - | 5 | - |
-            SectorPoint2::new( 0,  5), // | 7| 3 | - | 0 | - |
-            // Section 3 / 4           // |--|:1:|:2:|:3:|:4:|
-            SectorPoint2::new( 3,  5), // | 8| - | - | 1 | 0 |
-            SectorPoint2::new( 3,  7), // | 9| - | - | 2 | 3 |
-            SectorPoint2::new( 5,  7), // |10| - | - | 3 | 2 |
-            // Section 5 / 6           // |--|:5:|:6:|:7:|: :|
-            SectorPoint2::new( 6,  1), // |11| - | 0 | - |   |
-            SectorPoint2::new( 8,  1), // |12| - | 1 | 0 |   |
-            SectorPoint2::new( 8,  3), // |13| 1 | 2 | 5 |   |
-            SectorPoint2::new( 8,  4), // |14| 2 | - | 4 |   |
-            SectorPoint2::new( 6,  4), // |15| 3 | - | - |   |
-            SectorPoint2::new( 6,  3), // |16| 0 | 3 | - |   |
-            SectorPoint2::new( 9,  1), // |17| - | - | 1 |   |
-            SectorPoint2::new( 9,  3), // |18| - | - | 2 |   |
-            SectorPoint2::new( 9,  4), // |19| - | - | 3 |   |
+            // boundry L-shape                    // |--|:1:|:2:|:3:|:4:|
+            SectorPoint2::from_world( 0.0,  0.0), // | 0| 0 | - | - | - |
+            SectorPoint2::from_world(10.0,  0.0), // | 1| - | 0 | - | - |
+            SectorPoint2::from_world( 5.0,  5.0), // | 2| 1 | 1 | - | - |
+            SectorPoint2::from_world(10.0,  5.0), // | 3| - | 2 | - | - |
+            SectorPoint2::from_world( 5.0,  5.0), // | 4| 2 | 3 | - | 1 |
+            SectorPoint2::from_world( 5.0, 10.0), // | 5| - | - | 4 | - |
+            SectorPoint2::from_world( 0.0, 10.0), // | 6| - | - | 5 | - |
+            SectorPoint2::from_world( 0.0,  5.0), // | 7| 3 | - | 0 | - |
+            // Section 3 / 4                      // |--|:1:|:2:|:3:|:4:|
+            SectorPoint2::from_world( 3.0,  5.0), // | 8| - | - | 1 | 0 |
+            SectorPoint2::from_world( 3.0,  7.0), // | 9| - | - | 2 | 3 |
+            SectorPoint2::from_world( 5.0,  7.0), // |10| - | - | 3 | 2 |
+            // Section 5 / 6 / 7                  // |--|:5:|:6:|:7:|: :|
+            SectorPoint2::from_world( 6.0,  1.0), // |11| - | 0 | - |   |
+            SectorPoint2::from_world( 8.0,  1.0), // |12| - | 1 | 0 |   |
+            SectorPoint2::from_world( 8.0,  3.0), // |13| 1 | 2 | 5 |   |
+            SectorPoint2::from_world( 8.0,  4.0), // |14| 2 | - | 4 |   |
+            SectorPoint2::from_world( 6.0,  4.0), // |15| 3 | - | - |   |
+            SectorPoint2::from_world( 6.0,  3.0), // |16| 0 | 3 | - |   |
+            SectorPoint2::from_world( 9.0,  1.0), // |17| - | - | 1 |   |
+            SectorPoint2::from_world( 9.0,  3.0), // |18| - | - | 2 |   |
+            SectorPoint2::from_world( 9.0,  4.0), // |19| - | - | 3 |   |
         ],
         sections: vec![
             // boundry
@@ -37,7 +38,7 @@ pub fn main() {
                 edges: vec![
                     IdentifierPoint::from(0),
                     IdentifierPoint::from(1),
-                    IdentifierPoint::from(2),
+                    //IdentifierPoint::from(2),
                     IdentifierPoint::from(3),
                     IdentifierPoint::from(4),
                     IdentifierPoint::from(5),
@@ -151,11 +152,40 @@ pub fn main() {
         boundry: IdentifierSection::from(0),
     };
 
-    let mut polygons: Vec<Vec<[f32; 3]>> = Vec::default();
+    let mut polygons: Vec<Vec<[f32; 2]>> = Vec::default();
 
-    for section in sector.sections.iter() {
+    for section in sector.sections.iter().take(1) {
+        let points: Vec<[f32; 2]> = section.edges.iter().map(|&i| sector.points[usize::from(i)].to_world()).collect();
+        polygons.push(points);
+    }
+
+    let mut min = f32::MAX;
+    let mut max = f32::MIN;
+
+    let mut document = Document::new();
+    for polygon in polygons {
+        
+        let mut data = Data::new();
+        for (i, &[x, y]) in polygon.iter().enumerate() {
+            min = min.min(x).min(y);
+            max = max.max(x).max(y);
+            if i==0 {
+                data = data.move_to((x, y))
+            } else {
+                data = data.line_to((x, y));
+            }
+        }
+        data = data.close();
+
+        document = document.add(Path::new()
+            .set("fill", "none")
+            .set("stroke", "black")
+            .set("stroke-width", 0.1)
+            .set("d", data)
+        );
 
     }
 
-    println!("{:#?}", sector);
+    document = document.set("viewBox", (min-2.0, min-2.0, max+2.0, max+2.0));
+    svg::save("out.svg", &document).unwrap();
 }

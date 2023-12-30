@@ -1,14 +1,13 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
+#[macro_use]
+mod identifier;
+
 mod angle;
 pub use angle::*;
 
 mod connection;
 pub use connection::*;
-
-#[macro_use]
-mod identifier;
-pub use identifier::*;
 
 mod point;
 pub use point::*;
