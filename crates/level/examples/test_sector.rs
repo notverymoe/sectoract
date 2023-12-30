@@ -153,5 +153,5 @@ pub fn main() {
         boundry: IdentifierSection::from(0),
     };
     
-    util::sector_to_svg(&sector, "out.png");
+    util::sector_to_svg(&sector, "out.svg");
 }

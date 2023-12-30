@@ -38,6 +38,7 @@ pub fn polys_to_svg(polygons: &Vec<Vec<[f32; 2]>>, out: &str) {
 
     }
 
-    document = document.set("viewBox", (min-2.0, min-2.0, max+2.0, max+2.0));
+    let border = (max - min)*0.05;
+    document = document.set("viewBox", (min-border, min-border, max+border, max+border));
     svg::save(out, &document).unwrap();
 }
