@@ -1,6 +1,6 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
-use sectoract_level::map::{Sector, SectorPoint2, Section, IdentifierPoint, IdentifierSection, SectionSlope};
+use sectoract_level::map::{Sector, SectorPoint2, Section, IdentifierPoint, IdentifierSection, SectionSlope, UNIT_WORLD, UNIT_WORLD_INT};
 
 mod util;
 
@@ -51,8 +51,8 @@ pub fn main() {
             Section{
                 parent:   None,
                 surfaces: Some([
-                    SectionSlope::flat(4,  1),
-                    SectionSlope::flat(4, 10),
+                    SectionSlope::flat(4,  UNIT_WORLD_INT),
+                    SectionSlope::flat(4, 10 * UNIT_WORLD_INT),
                 ]),
                 edges: vec![
                     IdentifierPoint::from(0),
@@ -65,8 +65,8 @@ pub fn main() {
             Section{
                 parent:   None,
                 surfaces: Some([
-                    SectionSlope::flat(4,  1),
-                    SectionSlope::flat(4, 10),
+                    SectionSlope::flat(4,  UNIT_WORLD_INT),
+                    SectionSlope::flat(4, 10 * UNIT_WORLD_INT),
                 ]),
                 edges: vec![
                     IdentifierPoint::from(1),
@@ -79,8 +79,8 @@ pub fn main() {
             Section{
                 parent:   None,
                 surfaces: Some([
-                    SectionSlope::flat(6,  3),
-                    SectionSlope::flat(6, 10),
+                    SectionSlope::flat(6,  3 * UNIT_WORLD_INT),
+                    SectionSlope::flat(6, 10 * UNIT_WORLD_INT),
                 ]),
                 edges: vec![
                     IdentifierPoint::from( 7),
@@ -95,8 +95,8 @@ pub fn main() {
             Section{
                 parent:   None,
                 surfaces: Some([
-                    SectionSlope::slope_from_edge(0, vec![1, 3]),
-                    SectionSlope::flat(4, 10),
+                    SectionSlope::slope_from_edge(4, 0, vec![UNIT_WORLD_INT, 3 * UNIT_WORLD_INT]),
+                    SectionSlope::flat(4, 10 * UNIT_WORLD_INT),
                 ]),
                 edges: vec![
                     IdentifierPoint::from( 8),
@@ -109,8 +109,8 @@ pub fn main() {
             Section{
                 parent:   Some(IdentifierSection::from(2)),
                 surfaces: Some([
-                    SectionSlope::slope_from_edge(2, vec![1, 0]),
-                    SectionSlope::flat(4, 10),
+                    SectionSlope::slope_from_edge(4, 2, vec![UNIT_WORLD_INT, 0]),
+                    SectionSlope::flat(4, 10 * UNIT_WORLD_INT),
                 ]),
                 edges: vec![
                     IdentifierPoint::from(16),
@@ -124,7 +124,7 @@ pub fn main() {
                 parent:   Some(IdentifierSection::from(2)),
                 surfaces: Some([
                     SectionSlope::flat(4,  0),
-                    SectionSlope::flat(4, 10),
+                    SectionSlope::flat(4, 10 * UNIT_WORLD_INT),
                 ]),
                 edges: vec![
                     IdentifierPoint::from(11),
@@ -137,8 +137,8 @@ pub fn main() {
             Section{
                 parent:   Some(IdentifierSection::from(2)),
                 surfaces: Some([
-                    SectionSlope::slope_from_edge(2, vec![1, 0, 0]),
-                    SectionSlope::flat(6, 10),
+                    SectionSlope::slope_from_edge(6, 3, vec![UNIT_WORLD_INT, 0, 0]),
+                    SectionSlope::flat(6, 10 * UNIT_WORLD_INT),
                 ]),
                 edges: vec![
                     IdentifierPoint::from(12),
@@ -154,4 +154,5 @@ pub fn main() {
     };
     
     util::sector_to_svg(&sector, "out.svg");
+    util::sector_to_obj(&sector, "out.obj");
 }

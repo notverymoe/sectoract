@@ -1,7 +1,8 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
 /// 1 Map Unit = 2.5cm / ~1 inch, 40 Map Units per Metre
-pub const UNIT_WORLD: f32 = 40.0;
+pub const UNIT_WORLD:     f32 = 40.0;
+pub const UNIT_WORLD_INT: i16 = 40;
 
 // Texture scale should be 4x Unit_World (~160 TU per metre)
 
