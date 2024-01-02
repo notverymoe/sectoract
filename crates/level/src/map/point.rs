@@ -8,7 +8,7 @@ pub const UNIT_WORLD_INT: i16 = 40;
 
 // //
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SectorPoint2 {
     pub x: i16,
     pub y: i16,

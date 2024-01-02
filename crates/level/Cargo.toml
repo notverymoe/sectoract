@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+# bevy_math = "0.12.1"
 # nvm_str_id = { git="https://github.com/notverymoe/nvm-lib.git", rev="9edf2cf0ac9b124ad55915bb889eb860cf63333c" }
 
 [dev-dependencies]

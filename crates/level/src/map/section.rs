@@ -98,29 +98,11 @@ impl SectionSlope {
 
     #[must_use]
     pub fn slice_idx(&self, point: usize) -> usize {
-        if let SectionSlope::Flat { .. } = self {
-            0
-        } else {
-            let point = point as isize;
-            let iter = self.slice_iter();
-    
-            let dist_a = if iter.start[0] >= point {
-                iter.start[0] - point
-            } else {
-                (iter.start[0] + iter.wrap_idx) - point
-            };
-    
-            let dist_b = if point >= iter.start[1] {
-                point - iter.start[1]
-            } else {
-                (point + iter.wrap_idx) - iter.start[1]
-            };
-    
-            dist_a.min(dist_b) as usize
-        }
-
-
-
+        let point = point as isize;
+        let iter = self.slice_iter();
+        let dist_a = idx_distance_rev(iter.start[0], point, iter.wrap_idx);
+        let dist_b = idx_distance_fwd(iter.start[1], point, iter.wrap_idx);
+        dist_a.min(dist_b) as usize
     }
 
 }
@@ -160,5 +142,21 @@ impl<'a> Iterator for SectionSlopeIter<'a> {
         let result = self.peek();
         if result.is_some() { self.offset += 1; }
         result
+    }
+}
+
+const fn idx_distance_fwd(from: isize, to: isize, len: isize) -> isize {
+    if to >= from {
+        to - from
+    } else {
+        (to + len) - from
+    }
+}
+
+const fn idx_distance_rev(from: isize, to: isize, len: isize) -> isize {
+    if from >= to {
+        from - to
+    } else {
+        (from + len) - to
     }
 }
