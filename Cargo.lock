@@ -3,9 +3,15 @@
 version = 3
 
 [[package]]
+name = "nvm_str_id"
+version = "0.1.0"
+source = "git+https://github.com/notverymoe/nvm-lib.git?rev=cb0c29035c2964fa5fc3bb350f5afeb58f2710d4#cb0c29035c2964fa5fc3bb350f5afeb58f2710d4"
+
+[[package]]
 name = "sectoract_level"
 version = "0.1.0"
 dependencies = [
+ "nvm_str_id",
  "svg",
 ]
 
