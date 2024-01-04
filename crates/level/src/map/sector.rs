@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use crate::map::{IdentifierEdgeHalf, SectorPoint2, Section, IdentifierPoint, IdentifierSection};
+use crate::map::{IdentifierEdgeHalf, SectorPoint2, Section, IdentifierSectorPoint, IdentifierSection};
 
 pub struct Sector {
     pub points:   Vec<SectorPoint2>,
@@ -12,6 +12,6 @@ pub struct Sector {
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct EdgeHalf {
-    pub next:    IdentifierPoint,
+    pub next:    IdentifierSectorPoint,
     pub section: IdentifierSection,
 }

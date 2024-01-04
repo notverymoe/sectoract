@@ -20,6 +20,20 @@ pub use edge_half_identifier::*;
 mod section;
 pub use section::*;
 
-create_u16_ident!(pub IdentifierPoint  );
-create_u16_ident!(pub IdentifierNode   );
-create_u16_ident!(pub IdentifierSection);
+create_ident!(u16, pub IdentifierSectorPoint);
+create_ident!(u16, pub IdentifierSectorEdge );
+
+create_ident!(u16, pub IdentifierSection    );
+create_ident!( u8, pub IdentifierSectionPart);
+create_ident!( u8, pub IdentifierSectionEdge);
+
+pub enum IdentifierEdge {
+    Sector{
+        edge: IdentifierSectorEdge,
+    },
+    Section{
+        section: IdentifierSection,
+        part:    IdentifierSectionPart,
+        edge:    IdentifierSectionEdge,
+    }
+}
