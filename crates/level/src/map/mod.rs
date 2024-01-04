@@ -24,16 +24,9 @@ create_ident!(u16, pub IdentifierSectorPoint);
 create_ident!(u16, pub IdentifierSectorEdge );
 
 create_ident!(u16, pub IdentifierSection    );
-create_ident!( u8, pub IdentifierSectionPart);
-create_ident!( u8, pub IdentifierSectionEdge);
+create_ident!(u16, pub IdentifierSectionPart);
 
-pub enum IdentifierEdge {
-    Sector{
-        edge: IdentifierSectorEdge,
-    },
-    Section{
-        section: IdentifierSection,
-        part:    IdentifierSectionPart,
-        edge:    IdentifierSectionEdge,
-    }
+pub struct IdentifierSectionEdge {
+    pub edge: IdentifierEdgeHalf,
+    pub part: IdentifierSectionPart,
 }
