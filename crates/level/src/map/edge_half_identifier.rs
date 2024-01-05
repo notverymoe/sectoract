@@ -36,6 +36,19 @@ impl IdentifierEdgeHalf {
     pub const fn with_next(self, v: SectorPoint2) -> Self {
         Self::new([self.0[0], v])
     }
+
+    #[must_use]
+    pub const fn is_same_edge(self, other: Self) -> bool {
+        self.const_eq(other) || self.with_reverse().const_eq(other)
+    }
+
+    #[must_use]
+    pub const fn connects_to(self, other: Self) -> bool {
+        self.next().const_eq(other.prev()) ||
+        self.next().const_eq(other.next()) ||
+        self.prev().const_eq(other.next()) ||
+        self.prev().const_eq(other.prev())
+    }
     
     #[must_use]
     pub const fn prev(self) -> SectorPoint2 {
@@ -47,4 +60,8 @@ impl IdentifierEdgeHalf {
         self.0[0]
     }
 
+    #[must_use]
+    pub const fn const_eq(self, other: Self) -> bool {
+        constmuck::cast::<Self, u64>(self) == constmuck::cast::<Self, u64>(other)
+    }
 }

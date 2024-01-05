@@ -2,14 +2,17 @@
 
 use crate::map::SectorAngle;
 
+#[derive(Debug, Default)]
 pub struct Section {
     pub parts: Vec<SectionPart>,
 }
 
+#[derive(Debug)]
 pub struct SectionPart {
     pub surfaces: [Surface; 2],
 }
 
+#[derive(Debug)]
 pub enum Surface {
     Flat{
         height: i16,

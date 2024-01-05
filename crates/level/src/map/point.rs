@@ -45,6 +45,11 @@ impl SectorPoint2 {
     pub const fn extend(self, z: i16) -> SectorPoint3 {
         SectorPoint3::new(self.x, self.y, z)
     }
+
+    #[must_use]
+    pub const fn const_eq(self, other: Self) -> bool {
+        constmuck::cast::<SectorPoint2, u32>(self) == constmuck::cast::<SectorPoint2, u32>(other)
+    }
 }
 
 // ///
