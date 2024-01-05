@@ -20,9 +20,7 @@ pub use edge_half_identifier::*;
 mod section;
 pub use section::*;
 
-create_ident!(u16, pub IdentifierSectorPoint);
 create_ident!(u16, pub IdentifierSectorEdge );
-
 create_ident!(u16, pub IdentifierSection    );
 create_ident!(u16, pub IdentifierSectionPart);
 

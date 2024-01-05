@@ -1,5 +1,7 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
+use bytemuck::{Zeroable, Pod, ByteHash, ByteEq};
+
 /// 1 Map Unit = 2.5cm / ~1 inch, 40 Map Units per Metre
 pub const UNIT_WORLD_I: i16 = 40;
 pub const UNIT_WORLD_F: f32 = UNIT_WORLD_I as f32;
@@ -8,7 +10,9 @@ pub const UNIT_WORLD_F: f32 = UNIT_WORLD_I as f32;
 
 // //
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Default, Clone, Copy, Zeroable, Pod, ByteHash, ByteEq)]
+#[repr(C)]
+#[repr(packed)]
 pub struct SectorPoint2 {
     pub x: i16,
     pub y: i16,
