@@ -23,18 +23,18 @@ impl Debug for IdentifierEdgeHalf {
 impl IdentifierEdgeHalf {
 
     #[must_use]
-    pub const fn new(v: [Point2; 2]) -> Self {
-        Self(v)
+    pub const fn new(prev: Point2, next: Point2) -> Self {
+        Self([prev, next])
     }
 
     #[must_use]
     pub const fn with_reverse(self) -> Self {
-        Self::new([self.0[0], self.0[1]])
+        Self::new(self.next(), self.prev())
     }
 
     #[must_use]
     pub const fn with_next(self, v: Point2) -> Self {
-        Self::new([self.0[0], v])
+        Self::new(self.next(), v)
     }
 
     #[must_use]
@@ -52,12 +52,12 @@ impl IdentifierEdgeHalf {
     
     #[must_use]
     pub const fn prev(self) -> Point2 {
-        self.0[1]
+        self.0[0]
     }
 
     #[must_use]
     pub const fn next(self) -> Point2 {
-        self.0[0]
+        self.0[1]
     }
 
     #[must_use]

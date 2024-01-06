@@ -17,10 +17,20 @@ impl SectorBuilder {
         Self::default()
     }
 
-    pub fn add_section<const N: usize>(&mut self, section: Section, edges: [Point2; N]) -> &mut Self {
+    #[must_use]
+    pub fn add_section<const N: usize>(mut self, section: Section, edges: [Point2; N]) -> Self {
         self.sections.push(section);
         self.edges.push(Box::new(edges));
         self
+    }
+
+    #[must_use]
+    pub fn sections(&self) -> &[Section] {
+        self.sections.as_slice()
+    }
+
+    pub fn edges(&self) -> impl Iterator<Item = &[Point2]> {
+        self.edges.iter().map(|v| -> &[Point2] { v })
     }
 
     /// # Errors
@@ -33,35 +43,18 @@ impl SectorBuilder {
             let section = IdentifierSection::from_raw(idx_section as u16);
             for (i, &prev) in edge.iter().enumerate() {
                 let next = edge[(i + 1) % edge.len()];
-                graph.insert(IdentifierEdgeHalf::new([prev, next]), EdgeHalf{next, section});
+                graph.insert(IdentifierEdgeHalf::new(prev, next), EdgeHalf{next, section});
             }
         }
 
         // // Check Graph for Islands // //
         let mut bounds = Vec::<IdentifierEdgeHalf>::new();
+        let edges  = graph.keys().copied().collect::<Vec<_>>().into_boxed_slice();
         for key in graph.keys() {
             let key_rev = key.with_reverse();
             if !graph.contains_key(&key_rev) {
                 if bounds.is_empty() {
-                    bounds.push(key_rev);
-                    loop {
-                        let test_key = bounds[bounds.len() - 1];
-                        if let Some(next_key) = graph.keys().map(|v| v.with_reverse()).find(|&v| 
-                                test_key != v &&                         // Exclude the key we're looking for
-                                test_key.connects_to(v) &&               // Check that we have connectivity
-                                !graph.contains_key(&v) &&               // Check the graph doesn't contain the key (is orphan edge)
-                                (bounds[0] == v || !bounds.contains(&v)) // Check that we haven't already added it, unless it's the first key
-                            ) {
-
-                            // We have closed the loop!
-                            if bounds[0] == next_key { break; }
-
-                            bounds.push(next_key);
-                        } else {
-                            return Err("Incomplete or duplicate sector boundry detected. This shouldn't be possible.".to_owned());
-                        }
-                    }
-                    // Populate bounds
+                    extract_boundry(&mut bounds, key_rev, &edges);
                 } else if !bounds.contains(&key_rev) {
                     return Err("Multiple sector boundries detected.".to_owned());
                 }
@@ -72,4 +65,31 @@ impl SectorBuilder {
         Ok(Sector{graph, sections: self.sections})
     }
 
+}
+
+fn extract_boundry(bounds: &mut Vec<IdentifierEdgeHalf>, start: IdentifierEdgeHalf, keys: &[IdentifierEdgeHalf]) {
+    bounds.push(start);
+    loop {
+        let test_key = bounds[bounds.len() - 1];
+        if let Some(next_key) = keys.iter().map(|v| v.with_reverse()).find(|&v| 
+                start    != v &&                         // Exclude the start key
+                test_key != v &&                         // Exclude the key we're looking for
+                test_key.connects_to(v) &&               // Check that we have connectivity
+                !keys.contains(&v) &&                    // Check the graph doesn't contain the key (is orphan edge)
+                (start == v || !bounds.contains(&v)) // Check that we haven't already added it, unless it's the first key
+            ) {
+
+            bounds.push(next_key);
+
+            // We found the end!
+            // - A polygon must have at least 3 points
+            // - Only two edges should connect to the first point
+            if bounds.len() >= 3 && next_key.connects_to(start) {
+                break;
+            }
+
+        } else {
+            panic!("Incomplete or duplicate sector boundry detected. This shouldn't be possible.");
+        }
+    }
 }

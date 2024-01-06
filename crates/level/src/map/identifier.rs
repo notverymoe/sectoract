@@ -2,7 +2,7 @@
 
 macro_rules! create_ident {
     ($inner:ty, $vis:vis $name:ident) => {
-        #[derive(Clone, Copy, bytemuck::Zeroable, bytemuck::Pod, bytemuck::ByteHash, bytemuck::ByteEq)]
+        #[derive(Debug, Clone, Copy, bytemuck::Zeroable, bytemuck::Pod, bytemuck::ByteHash, bytemuck::ByteEq)]
         #[repr(transparent)]
         $vis struct $name($inner);
 

@@ -106,6 +106,11 @@ impl Point2 {
         ]
     }
 
+    #[must_use]
+    pub const fn from_slice_const<const N: usize>(v: [[i16; 2]; N]) -> [Self; N] {
+        constmuck::cast::<[[i16; 2]; N], [Self; N]>(v)
+    }
+
 }
 
 impl Point2 {

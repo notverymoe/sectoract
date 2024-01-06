@@ -4,12 +4,13 @@ use std::collections::HashMap;
 
 use crate::map::{IdentifierEdgeHalf, IdentifierSection, Section, Point2};
 
+#[derive(Debug)]
 pub struct Sector {
     pub graph:    HashMap<IdentifierEdgeHalf, EdgeHalf>,
     pub sections: Vec<Section>,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct EdgeHalf {
     pub next:    Point2,
     pub section: IdentifierSection,
