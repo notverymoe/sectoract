@@ -1,6 +1,6 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
-use sectoract_level::{util::{SectorBuilder, SectionIter}, map::{Section, Point2, UNIT_WORLD_I, Surface, IdentifierSection}};
+use sectoract_level::{util::{SectorBuilder, extract_section_points_from_sector}, map::{Section, Point2, UNIT_WORLD_I, Surface, IdentifierSection}};
 
 use crate::util::polys_to_svg;
 
@@ -79,12 +79,10 @@ pub fn main() {
     // // Extract Sector Contours // //
     let mut sector_list: Vec<Vec<Point2>> = Vec::with_capacity(sector.sections.len());
     for section in 0..sector.sections.len() {
-        let section = IdentifierSection::from_raw(section as u16);
-        for (k, v) in &sector.graph {
-            if v.section != section { continue; }
-            sector_list.push(SectionIter::new(&sector.graph, *k).map(|(e, _h)| e.prev()).collect());
-            break;
-        }
+        sector_list.push(extract_section_points_from_sector(
+            &sector.graph, 
+            IdentifierSection::from_raw(section as u16)
+        ).unwrap());
     }
 
     polys_to_svg(sector_list.iter().map(|v| -> &[Point2] { v }), "test_export_dir/out_rebuilt.svg");
