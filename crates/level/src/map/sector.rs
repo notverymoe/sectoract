@@ -15,3 +15,12 @@ pub struct EdgeHalf {
     pub next:    Point2,
     pub section: IdentifierSection,
 }
+
+impl EdgeHalf {
+    
+    #[must_use]
+    pub const fn new(next: Point2, section: IdentifierSection) -> Self {
+        Self{next, section}
+    }
+
+}

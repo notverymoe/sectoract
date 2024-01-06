@@ -42,8 +42,9 @@ impl SectorBuilder {
         for (idx_section, edge) in self.edges.iter().enumerate() {
             let section = IdentifierSection::from_raw(idx_section as u16);
             for (i, &prev) in edge.iter().enumerate() {
-                let next = edge[(i + 1) % edge.len()];
-                graph.insert(IdentifierEdgeHalf::new(prev, next), EdgeHalf{next, section});
+                let next      = edge[(i + 1) % edge.len()];
+                let connected = edge[(i + 2) % edge.len()];
+                graph.insert(IdentifierEdgeHalf::new(prev, next), EdgeHalf::new(connected, section));
             }
         }
 

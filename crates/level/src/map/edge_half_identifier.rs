@@ -6,6 +6,13 @@ use bytemuck::{Zeroable, Pod, ByteHash, ByteEq};
 
 use crate::map::Point2;
 
+pub enum ConnectionKind {
+    Disjoint,
+    Reverse,
+    Before,
+    After,
+}
+
 #[derive(Clone, Copy, Zeroable, Pod, ByteHash, ByteEq)]
 #[repr(transparent)]
 pub struct IdentifierEdgeHalf([Point2; 2]);
@@ -34,7 +41,7 @@ impl IdentifierEdgeHalf {
 
     #[must_use]
     pub const fn with_next(self, v: Point2) -> Self {
-        constmuck::cast::<u64, Self>(constmuck::cast::<Self, u64>(self) << 32 | (constmuck::cast::<Point2, u32>(v) as u64))
+        Self::new(self.next(), v)
     }
 
     #[must_use]
@@ -48,6 +55,19 @@ impl IdentifierEdgeHalf {
         self.next().const_eq(other.next()) ||
         self.prev().const_eq(other.next()) ||
         self.prev().const_eq(other.prev())
+    }
+
+    #[must_use]
+    pub const fn find_connection_kind(self, other: Self) -> ConnectionKind {
+        if self.next().const_eq(other.prev()) {
+            ConnectionKind::Before
+        } else if self.prev().const_eq(other.next()) {
+            ConnectionKind::After
+        } else if self.with_reverse().const_eq(other) {
+            ConnectionKind::Reverse
+        } else {
+            ConnectionKind::Disjoint
+        }
     }
     
     #[must_use]
