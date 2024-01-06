@@ -2,12 +2,12 @@
 
 use std::collections::HashMap;
 
-use crate::map::{SectorPoint2, Section, Sector, IdentifierEdgeHalf, EdgeHalf, IdentifierSection};
+use crate::map::{Point2, Section, Sector, IdentifierEdgeHalf, EdgeHalf, IdentifierSection};
 
 #[derive(Debug, Default)]
 pub struct SectorBuilder {
     sections: Vec<Section>,
-    edges:    Vec<Box<[SectorPoint2]>>,
+    edges:    Vec<Box<[Point2]>>,
 }
 
 impl SectorBuilder {
@@ -17,7 +17,7 @@ impl SectorBuilder {
         Self::default()
     }
 
-    pub fn add_section<const N: usize>(&mut self, section: Section, edges: [SectorPoint2; N]) -> &mut Self {
+    pub fn add_section<const N: usize>(&mut self, section: Section, edges: [Point2; N]) -> &mut Self {
         self.sections.push(section);
         self.edges.push(Box::new(edges));
         self

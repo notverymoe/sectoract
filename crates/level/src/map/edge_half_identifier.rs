@@ -4,15 +4,15 @@ use core::fmt::Debug;
 
 use bytemuck::{Zeroable, Pod, ByteHash, ByteEq};
 
-use crate::map::SectorPoint2;
+use crate::map::Point2;
 
 #[derive(Clone, Copy, Zeroable, Pod, ByteHash, ByteEq)]
 #[repr(transparent)]
-pub struct IdentifierEdgeHalf([SectorPoint2; 2]);
+pub struct IdentifierEdgeHalf([Point2; 2]);
 
 impl Debug for IdentifierEdgeHalf {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f
+    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        formatter
             .debug_tuple("IdentifierEdge")
             .field(&self.prev())
             .field(&self.next())
@@ -23,7 +23,7 @@ impl Debug for IdentifierEdgeHalf {
 impl IdentifierEdgeHalf {
 
     #[must_use]
-    pub const fn new(v: [SectorPoint2; 2]) -> Self {
+    pub const fn new(v: [Point2; 2]) -> Self {
         Self(v)
     }
 
@@ -33,7 +33,7 @@ impl IdentifierEdgeHalf {
     }
 
     #[must_use]
-    pub const fn with_next(self, v: SectorPoint2) -> Self {
+    pub const fn with_next(self, v: Point2) -> Self {
         Self::new([self.0[0], v])
     }
 
@@ -51,12 +51,12 @@ impl IdentifierEdgeHalf {
     }
     
     #[must_use]
-    pub const fn prev(self) -> SectorPoint2 {
+    pub const fn prev(self) -> Point2 {
         self.0[1]
     }
 
     #[must_use]
-    pub const fn next(self) -> SectorPoint2 {
+    pub const fn next(self) -> Point2 {
         self.0[0]
     }
 

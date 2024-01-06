@@ -1,12 +1,7 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
-use core::fmt::Debug;
-
 #[macro_use]
 mod identifier;
-
-mod angle;
-pub use angle::*;
 
 mod point;
 pub use point::*;
