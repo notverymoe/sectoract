@@ -34,7 +34,7 @@ impl IdentifierEdgeHalf {
 
     #[must_use]
     pub const fn with_next(self, v: Point2) -> Self {
-        Self::new(self.next(), v)
+        constmuck::cast::<u64, Self>(constmuck::cast::<Self, u64>(self) << 32 | (constmuck::cast::<Point2, u32>(v) as u64))
     }
 
     #[must_use]
