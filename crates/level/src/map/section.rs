@@ -26,7 +26,7 @@ impl Section {
 
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Surface {
     Flat{
         height: i16,

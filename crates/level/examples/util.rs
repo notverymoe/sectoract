@@ -4,22 +4,24 @@
 
 use std::{fmt::Write, path::Path as FSPath};
 
-use sectoract_level::map::Point2;
+use sectoract_level::map::{Point2, Point3};
 use svg::{Document, node::element::{path::Data, Path, Definitions, Marker, Group}};
 
-pub fn face_to_obj_ngon(vert_count: usize, out: &mut String, face: &[[f32; 3]]) -> usize {
-
-    for [x, y, z] in face {
+pub fn append_ngon_to_obj_str(out: &mut String, vert_count: usize, face: impl Iterator<Item = Point3>) -> usize {
+    let mut len = 0;
+    for point in face {
+        let [x, y, z] = point.to_world();
         writeln!(out, "v {} {} {}", x, y, z).unwrap();
+        len += 1;
     }
 
     write!(out, "f ").unwrap();
-    for i in 0..face.len() {
+    for i in 0..len {
         write!(out, "{} ", vert_count + i + 1).unwrap();
     }
     writeln!(out).unwrap();
 
-    vert_count + face.len()
+    vert_count + len
 }
 
 pub fn polys_to_svg<'a>(polygons: impl Iterator<Item = &'a [Point2]>, dest: &str) {

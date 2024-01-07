@@ -1,13 +1,13 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
-use sectoract_level::{util::{SectorBuilder, extract_section_points_from_sector}, map::{Section, Point2, UNIT_WORLD_I, Surface, IdentifierSection}};
+use sectoract_level::{util::{SectorBuilder, extract_section_points_from_sector, extract_boundry_from_sector}, map::{Section, Point2, UNIT_WORLD_I, Surface, IdentifierSection, IdentifierEdgeHalf}};
 
-use crate::util::polys_to_svg;
+use crate::util::{polys_to_svg, append_ngon_to_obj_str};
 
 mod util;
 
 pub const HEIGHT_MALL:     i16 = UNIT_WORLD_I * 22;
-pub const LENGTH_MALL:     i16 = UNIT_WORLD_I * 12;
+pub const LENGTH_MALL:     i16 = UNIT_WORLD_I * 36;
 pub const WIDTH_PLATFORM:  i16 = UNIT_WORLD_I * 3;
 pub const WIDTH_CROSSOVER: i16 = UNIT_WORLD_I * 6;
 
@@ -86,4 +86,69 @@ pub fn main() {
     }
 
     polys_to_svg(sector_list.iter().map(|v| -> &[Point2] { v }), "test_export_dir/out_rebuilt.svg");
+
+    // // Build Surfaces // //
+
+    let mut obj_str = "".to_owned();
+    let mut vert_count = 0;
+    for (section, points) in sector.sections.iter().zip(sector_list.iter()) {
+        for (i, surface) in section.surfaces.iter().enumerate() {
+            let Surface::Flat{height} = *surface else { panic!("Slopes are unsupported") };
+            
+            vert_count = if i % 2 == 0 {
+                append_ngon_to_obj_str(&mut obj_str, vert_count, points.iter().map(|&v| v.extend(height)))
+            } else {
+                append_ngon_to_obj_str(&mut obj_str, vert_count, points.iter().rev().map(|&v| v.extend(height)))
+            };
+
+            if i > 0 && (i % 2 == 0) {
+                let Surface::Flat{height: height_prev} = section.surfaces[i-1] else { panic!("Slopes are unsupported") };
+                for (i, prev) in points.iter().enumerate() {
+                    let next = points[(i+1)%points.len()];
+                    let edge = IdentifierEdgeHalf::new(*prev, next);
+
+                    // if on boundry, hide edge
+                    if sector.graph.contains_key(&edge.with_reverse()) {
+                        vert_count = append_ngon_to_obj_str(&mut obj_str, vert_count, [
+                            prev.extend(height),
+                            prev.extend(height_prev),
+                            next.extend(height_prev),
+                            next.extend(height),
+                        ].into_iter())
+                    }
+                }
+            }
+
+        }
+    }
+
+    // TODO move into helper
+    let mut boundry: Vec<IdentifierEdgeHalf> = Vec::new();
+    let edges = sector.graph.keys().copied().collect::<Vec<_>>().into_boxed_slice();
+    for key in sector.graph.keys() {
+        let key_rev = key.with_reverse();
+        if !sector.graph.contains_key(&key_rev) {
+            extract_boundry_from_sector(&mut boundry, key_rev, &edges);
+            break;
+        }
+    }
+
+    for edge in boundry {
+        let prev = edge.prev();
+        let next = edge.next();
+
+        // Get range for edge
+        let section = &sector.sections[sector.graph.get(&edge.with_reverse()).unwrap().section.to_raw() as usize];
+        let Some(Surface::Flat{height: height_min}) = section.surfaces.first() else { panic!("Slopes are unsupported") };
+        let Some(Surface::Flat{height: height_max}) = section.surfaces.last() else { panic!("Slopes are unsupported") };
+
+        vert_count = append_ngon_to_obj_str(&mut obj_str, vert_count, [
+            prev.extend(*height_min),
+            next.extend(*height_min),
+            next.extend(*height_max),
+            prev.extend(*height_max),
+        ].into_iter())
+    }
+
+    std::fs::write("test_export_dir/out_surfaces.obj", obj_str).unwrap();
 }
