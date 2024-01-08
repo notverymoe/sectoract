@@ -33,16 +33,18 @@ pub fn main() {
                 [          0,              0],
                 [LENGTH_MALL,              0],
                 [LENGTH_MALL, WIDTH_PLATFORM],
+                [LENGTH_MALL - WIDTH_CROSSOVER, WIDTH_PLATFORM],
+                [              WIDTH_CROSSOVER, WIDTH_PLATFORM],
                 [          0, WIDTH_PLATFORM],
             ])
         )
         .add_section(
             Section::flat_with_roof(0, HEIGHT_MALL), 
             Point2::from_slice_const([
-                [          0,                   WIDTH_PLATFORM],
-                [LENGTH_MALL,                   WIDTH_PLATFORM],
-                [LENGTH_MALL, WIDTH_CROSSOVER + WIDTH_PLATFORM],
-                [          0, WIDTH_CROSSOVER + WIDTH_PLATFORM],
+                [              WIDTH_CROSSOVER,                   WIDTH_PLATFORM],
+                [LENGTH_MALL - WIDTH_CROSSOVER,                   WIDTH_PLATFORM],
+                [LENGTH_MALL - WIDTH_CROSSOVER, WIDTH_CROSSOVER + WIDTH_PLATFORM],
+                [              WIDTH_CROSSOVER, WIDTH_CROSSOVER + WIDTH_PLATFORM],
             ])
         )
         .add_section(
@@ -62,16 +64,111 @@ pub fn main() {
             ]), 
             Point2::from_slice_const([
                 [          0, WIDTH_CROSSOVER +   WIDTH_PLATFORM],
+                [              WIDTH_CROSSOVER, WIDTH_CROSSOVER + WIDTH_PLATFORM],
+                [LENGTH_MALL - WIDTH_CROSSOVER, WIDTH_CROSSOVER + WIDTH_PLATFORM],
                 [LENGTH_MALL, WIDTH_CROSSOVER +   WIDTH_PLATFORM],
                 [LENGTH_MALL, WIDTH_CROSSOVER + 2*WIDTH_PLATFORM],
                 [          0, WIDTH_CROSSOVER + 2*WIDTH_PLATFORM],
+            ])
+        )
+        .add_section(
+            Section::new(vec![
+                Surface::flat(                0),
+
+                Surface::slope(
+                    Point2::new(0, WIDTH_PLATFORM),
+                    Point2::new(0, WIDTH_CROSSOVER),
+                    [UNIT_WORLD_I *  3, UNIT_WORLD_I *  6]
+                ),
+                Surface::slope(
+                    Point2::new(0, WIDTH_PLATFORM),
+                    Point2::new(0, WIDTH_CROSSOVER),
+                    [UNIT_WORLD_I *  4, UNIT_WORLD_I *  7]
+                ),
+
+                Surface::slope(
+                    Point2::new(0, WIDTH_PLATFORM),
+                    Point2::new(0, WIDTH_CROSSOVER),
+                    [UNIT_WORLD_I *  9, UNIT_WORLD_I * 12]
+                ),
+                Surface::slope(
+                    Point2::new(0, WIDTH_PLATFORM),
+                    Point2::new(0, WIDTH_CROSSOVER),
+                    [UNIT_WORLD_I * 10, UNIT_WORLD_I * 13]
+                ),
+
+                Surface::slope(
+                    Point2::new(0, WIDTH_PLATFORM),
+                    Point2::new(0, WIDTH_CROSSOVER),
+                    [UNIT_WORLD_I * 15, UNIT_WORLD_I * 18]
+                ),
+                Surface::slope(
+                    Point2::new(0, WIDTH_PLATFORM),
+                    Point2::new(0, WIDTH_CROSSOVER),
+                    [UNIT_WORLD_I * 16, UNIT_WORLD_I * 19]
+                ),
+
+                Surface::flat(HEIGHT_MALL),
+            ]), 
+            Point2::from_slice_const([
+                [              0, WIDTH_CROSSOVER + WIDTH_PLATFORM],
+                [              0, WIDTH_PLATFORM                  ],
+                [WIDTH_CROSSOVER, WIDTH_PLATFORM                  ],
+                [WIDTH_CROSSOVER, WIDTH_CROSSOVER + WIDTH_PLATFORM],
+            ])
+        )
+        .add_section(
+            Section::new(vec![
+                Surface::flat(                0),
+
+                Surface::slope(
+                    Point2::new(0, WIDTH_CROSSOVER + WIDTH_PLATFORM),
+                    Point2::new(0, -WIDTH_CROSSOVER),
+                    [-UNIT_WORLD_I, UNIT_WORLD_I *  3]
+                ),
+                Surface::slope(
+                    Point2::new(0, WIDTH_CROSSOVER + WIDTH_PLATFORM),
+                    Point2::new(0, -WIDTH_CROSSOVER),
+                    [           0, UNIT_WORLD_I *  4]
+                ),
+
+                Surface::slope(
+                    Point2::new(0, WIDTH_CROSSOVER + WIDTH_PLATFORM),
+                    Point2::new(0, -WIDTH_CROSSOVER),
+                    [UNIT_WORLD_I *  6, UNIT_WORLD_I * 9]
+                ),
+                Surface::slope(
+                    Point2::new(0, WIDTH_CROSSOVER + WIDTH_PLATFORM),
+                    Point2::new(0, -WIDTH_CROSSOVER),
+                    [UNIT_WORLD_I *  7, UNIT_WORLD_I *  10]
+                ),
+
+                Surface::slope(
+                    Point2::new(0, WIDTH_CROSSOVER + WIDTH_PLATFORM),
+                    Point2::new(0, -WIDTH_CROSSOVER),
+                    [UNIT_WORLD_I * 12, UNIT_WORLD_I * 15]
+                ),
+                Surface::slope(
+                    Point2::new(0, WIDTH_CROSSOVER + WIDTH_PLATFORM),
+                    Point2::new(0, -WIDTH_CROSSOVER),
+                    [UNIT_WORLD_I * 13, UNIT_WORLD_I *  16]
+                ),
+                
+
+                Surface::flat(HEIGHT_MALL),
+            ]), 
+            Point2::from_slice_const([
+                [LENGTH_MALL,                   WIDTH_CROSSOVER + WIDTH_PLATFORM],
+                [LENGTH_MALL - WIDTH_CROSSOVER, WIDTH_CROSSOVER + WIDTH_PLATFORM],
+                [LENGTH_MALL - WIDTH_CROSSOVER, WIDTH_PLATFORM                  ],
+                [LENGTH_MALL,                   WIDTH_PLATFORM                  ],
             ])
         );
 
     polys_to_svg(sector.edges(), "test_export_dir/out_builder.svg");
 
     let sector = sector.build().unwrap();
-    println!("{:#?}", sector);
+    // println!("{:#?}", sector);
 
     let edges: Vec<_> = sector.graph.keys().map(|v| vec![v.prev(), v.next()].into_boxed_slice()).collect();
     polys_to_svg(edges.iter().map(|v| -> &[Point2] { v }), "test_export_dir/out_graph.svg");
@@ -93,27 +190,26 @@ pub fn main() {
     let mut vert_count = 0;
     for (section, points) in sector.sections.iter().zip(sector_list.iter()) {
         for (i, surface) in section.surfaces.iter().enumerate() {
-            let Surface::Flat{height} = *surface else { panic!("Slopes are unsupported") };
-            
+
             vert_count = if i % 2 == 0 {
-                append_ngon_to_obj_str(&mut obj_str, vert_count, points.iter().map(|&v| v.extend(height)))
+                append_ngon_to_obj_str(&mut obj_str, vert_count, points.iter().map(|&v| v.extend(surface.get_height_at(v))))
             } else {
-                append_ngon_to_obj_str(&mut obj_str, vert_count, points.iter().rev().map(|&v| v.extend(height)))
+                append_ngon_to_obj_str(&mut obj_str, vert_count, points.iter().rev().map(|&v| v.extend(surface.get_height_at(v))))
             };
 
             if i > 0 && (i % 2 == 0) {
-                let Surface::Flat{height: height_prev} = section.surfaces[i-1] else { panic!("Slopes are unsupported") };
-                for (i, prev) in points.iter().enumerate() {
+                let surface_prev = section.surfaces[i-1];
+                for (i, &prev) in points.iter().enumerate() {
                     let next = points[(i+1)%points.len()];
-                    let edge = IdentifierEdgeHalf::new(*prev, next);
+                    let edge = IdentifierEdgeHalf::new(prev, next);
 
                     // if on boundry, hide edge
                     if sector.graph.contains_key(&edge.with_reverse()) {
                         vert_count = append_ngon_to_obj_str(&mut obj_str, vert_count, [
-                            prev.extend(height),
-                            prev.extend(height_prev),
-                            next.extend(height_prev),
-                            next.extend(height),
+                            prev.extend(surface.get_height_at(prev)),
+                            prev.extend(surface_prev.get_height_at(prev)),
+                            next.extend(surface_prev.get_height_at(next)),
+                            next.extend(surface.get_height_at(next)),
                         ].into_iter())
                     }
                 }

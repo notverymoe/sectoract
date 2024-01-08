@@ -1,5 +1,7 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
+use core::ops::{Sub, Add};
+
 use bytemuck::{Zeroable, Pod, ByteHash, ByteEq};
 
 /// 1 Map Unit = 2.5cm / ~1 inch, 40 Map Units per Metre
@@ -132,6 +134,24 @@ impl Point2 {
     #[must_use]
     pub const fn const_eq(self, other: Self) -> bool {
         constmuck::cast::<Point2, u32>(self) == constmuck::cast::<Point2, u32>(other)
+    }
+
+}
+
+impl Add for Point2 {
+    type Output = Point2;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self::new(self.x + rhs.x, self.y + rhs.y)
+    }
+
+}
+
+impl Sub for Point2 {
+    type Output = Point2;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self::new(self.x - rhs.x, self.y - rhs.y)
     }
 
 }
