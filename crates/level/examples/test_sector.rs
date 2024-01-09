@@ -1,6 +1,9 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
-use sectoract_level::{util::{SectorBuilder, extract_section_points_from_sector, extract_boundry_from_sector}, map::{Section, Point2, UNIT_WORLD_I, Surface, IdentifierSection, IdentifierEdgeHalf}};
+use sectoract_level::{
+    util::{SectorBuilder, extract_section_points_from_sector}, 
+    map::{Section, Point2, UNIT_WORLD_I, Surface, IdentifierSection, IdentifierEdgeHalf, Point3}
+};
 
 use crate::util::{polys_to_svg, append_ngon_to_obj_str};
 
@@ -174,21 +177,21 @@ pub fn main() {
     polys_to_svg(edges.iter().map(|v| -> &[Point2] { v }), "test_export_dir/out_graph.svg");
 
     // // Extract Sector Contours // //
-    let mut sector_list: Vec<Vec<Point2>> = Vec::with_capacity(sector.sections.len());
+    let mut section_pnts: Vec<Vec<Point2>> = Vec::with_capacity(sector.sections.len());
     for section in 0..sector.sections.len() {
-        sector_list.push(extract_section_points_from_sector(
+        section_pnts.push(extract_section_points_from_sector(
             &sector.graph, 
             IdentifierSection::from_raw(section as u16)
         ).unwrap());
     }
 
-    polys_to_svg(sector_list.iter().map(|v| -> &[Point2] { v }), "test_export_dir/out_rebuilt.svg");
+    polys_to_svg(section_pnts.iter().map(|v| -> &[Point2] { v }), "test_export_dir/out_rebuilt.svg");
 
     // // Build Surfaces // //
 
     let mut obj_str = "".to_owned();
     let mut vert_count = 0;
-    for (section, points) in sector.sections.iter().zip(sector_list.iter()) {
+    for (section, points) in sector.sections.iter().zip(section_pnts.iter()) {
         for (i, surface) in section.surfaces.iter().enumerate() {
 
             vert_count = if i % 2 == 0 {
@@ -197,54 +200,85 @@ pub fn main() {
                 append_ngon_to_obj_str(&mut obj_str, vert_count, points.iter().rev().map(|&v| v.extend(surface.get_height_at(v))))
             };
 
-            if i > 0 && (i % 2 == 0) {
-                let surface_prev = section.surfaces[i-1];
-                for (i, &prev) in points.iter().enumerate() {
-                    let next = points[(i+1)%points.len()];
-                    let edge = IdentifierEdgeHalf::new(prev, next);
-
-                    // if on boundry, hide edge
-                    if sector.graph.contains_key(&edge.with_reverse()) {
-                        vert_count = append_ngon_to_obj_str(&mut obj_str, vert_count, [
-                            prev.extend(surface.get_height_at(prev)),
-                            prev.extend(surface_prev.get_height_at(prev)),
-                            next.extend(surface_prev.get_height_at(next)),
-                            next.extend(surface.get_height_at(next)),
-                        ].into_iter())
-                    }
-                }
-            }
-
+            build_section_edges(
+                i, section, points, 
+                |e| sector.graph.get(&e).map(|v| &sector.sections[usize::from(v.section)]),
+                |_e, f| { vert_count = append_ngon_to_obj_str(&mut obj_str, vert_count, f.iter().copied()) }
+            );
         }
-    }
-
-    // TODO move into helper
-    let mut boundry: Vec<IdentifierEdgeHalf> = Vec::new();
-    let edges = sector.graph.keys().copied().collect::<Vec<_>>().into_boxed_slice();
-    for key in sector.graph.keys() {
-        let key_rev = key.with_reverse();
-        if !sector.graph.contains_key(&key_rev) {
-            extract_boundry_from_sector(&mut boundry, key_rev, &edges);
-            break;
-        }
-    }
-
-    for edge in boundry {
-        let prev = edge.prev();
-        let next = edge.next();
-
-        // Get range for edge
-        let section = &sector.sections[sector.graph.get(&edge.with_reverse()).unwrap().section.to_raw() as usize];
-        let Some(Surface::Flat{height: height_min}) = section.surfaces.first() else { panic!("Slopes are unsupported") };
-        let Some(Surface::Flat{height: height_max}) = section.surfaces.last() else { panic!("Slopes are unsupported") };
-
-        vert_count = append_ngon_to_obj_str(&mut obj_str, vert_count, [
-            prev.extend(*height_min),
-            next.extend(*height_min),
-            next.extend(*height_max),
-            prev.extend(*height_max),
-        ].into_iter())
     }
 
     std::fs::write("test_export_dir/out_surfaces.obj", obj_str).unwrap();
 }
+
+fn build_section_edges<'a>(
+    part:    usize,
+    section: &Section,
+    points:  &[Point2],
+    try_get_connection: impl Fn(IdentifierEdgeHalf) -> Option<&'a Section>,
+    mut push_edge:      impl FnMut(IdentifierEdgeHalf, &[Point3]),
+) {
+    let is_floor = part % 2 == 0;
+    let is_end   = part == 0 || part+1 == section.surfaces.len();
+    if !is_floor && !is_end {
+        return;  // We don't generate surfaces for mid-ceilings
+    }
+
+    let surf_curr = &section.surfaces[part];
+
+    // TODO triangle edges
+
+    if !is_end {
+        let surf_prev = &section.surfaces[part-1];
+
+        for (i, &pnt_prev) in points.iter().enumerate() {
+            let pnt_next = points[(i+1) % points.len()];
+            
+            let edge = IdentifierEdgeHalf::new(pnt_prev, pnt_next);
+    
+            if try_get_connection(edge.with_reverse()).is_some() {
+                // TODO check neighbouring connection for if we can occlude this edge
+                // TODO check for bellow other min-floor, extrude up
+                push_edge(edge, &[
+                    pnt_prev.extend(surf_curr.get_height_at(pnt_prev)),
+                    pnt_prev.extend(surf_prev.get_height_at(pnt_prev)),
+                    pnt_next.extend(surf_prev.get_height_at(pnt_next)),
+                    pnt_next.extend(surf_curr.get_height_at(pnt_next)),
+                ]);
+            } else {
+                let surf_next = &section.surfaces[part+1]; // SAFE: We're !is_end
+                push_edge(edge, &[
+                    pnt_prev.extend(surf_curr.get_height_at(pnt_prev)),
+                    pnt_prev.extend(surf_next.get_height_at(pnt_prev)),
+                    pnt_next.extend(surf_next.get_height_at(pnt_next)),
+                    pnt_next.extend(surf_curr.get_height_at(pnt_next)),
+                ]);
+            }
+
+        }
+    } else {
+        // TODO Honestly, uhhhh...... yeah.......
+    }
+}
+
+/*
+    /*
+            let edge = IdentifierEdgeHalf::new(end, start);
+        if let Some(connection) = try_get_connection(edge) {
+            let height_other = [
+                find_floor_for(height_self[0], start, &connection.surfaces),
+                find_floor_for(height_self[1], start, &connection.surfaces),
+            ];
+        }
+     */
+
+fn find_floor_for(height: i16, point: Point2, surfaces: &[Surface]) -> i16 {
+    let mut result = height;
+    for (i, floor) in surfaces.iter().enumerate().step_by(2) {
+        let tmp = floor.get_height_at(point);
+        if tmp > height { break; }
+        result = tmp;
+    }
+    result
+}
+*/
