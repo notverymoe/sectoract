@@ -81,6 +81,11 @@ impl IdentifierEdgeHalf {
     }
 
     #[must_use]
+    pub const fn as_points(self) -> [Point2; 2] {
+        self.0
+    }
+
+    #[must_use]
     pub const fn const_eq(self, other: Self) -> bool {
         constmuck::cast::<Self, u64>(self) == constmuck::cast::<Self, u64>(other)
     }

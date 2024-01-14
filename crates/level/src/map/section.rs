@@ -2,6 +2,8 @@
 
 use crate::map::Point2;
 
+use super::IdentifierEdgeHalf;
+
 #[derive(Debug, Default)]
 pub struct Section {
     pub surfaces: Vec<Surface>,
@@ -22,6 +24,18 @@ impl Section {
     #[must_use]
     pub fn flat_with_roof(floor: i16, height: i16) -> Self {
         Self::new(vec![Surface::flat(floor), Surface::flat(floor+height)])
+    }
+
+}
+
+impl Section {
+
+    pub fn iter_floors(&self) -> impl Iterator<Item = (usize, &Surface)> {
+        self.surfaces.iter().enumerate().step_by(2)
+    }
+
+    pub fn iter_ceils(&self) -> impl Iterator<Item = (usize, &Surface)> {
+        self.surfaces.iter().enumerate().skip(1).step_by(2)
     }
 
 }
@@ -57,7 +71,12 @@ impl Surface {
 impl Surface {
 
     #[must_use]
-    pub fn get_height_at(&self, point: Point2) -> i16 {
+    pub fn get_height_at_edge(&self, edge: IdentifierEdgeHalf) -> [i16; 2] {
+        edge.as_points().map(|v| self.get_height_at_point(v))
+    }
+
+    #[must_use]
+    pub fn get_height_at_point(&self, point: Point2) -> i16 {
         match self {
             Surface::Flat { height } => *height,
             Surface::Slope( s      ) => s.get_height_at(point),
