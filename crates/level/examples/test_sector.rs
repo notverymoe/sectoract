@@ -323,12 +323,10 @@ fn is_edge_occluded_by_section(
     height_floor: [i16; 2],
     height_ceil: [i16; 2],
  ) -> bool {
-    section_other.iter_floors().any(|(i, v)| {
-        is_edge_occluded_by_surfaces(
-            height_floor,
-            height_ceil,
-            v.get_height_at_edge(edge),
-            (i != 0).then(|| section_other.surfaces[i-1].get_height_at_edge(edge))
-        )
-    })
+    section_other.iter_floors().any(|(i, v)| is_edge_occluded_by_surfaces(
+        height_floor,
+        height_ceil,
+        v.get_height_at_edge(edge),
+        (i != 0).then(|| section_other.surfaces[i-1].get_height_at_edge(edge))
+    ))
 }
