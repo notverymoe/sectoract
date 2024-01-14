@@ -151,7 +151,7 @@ pub fn main() {
                 ),
                 
 
-                Surface::flat(HEIGHT_MALL),
+                Surface::flat(HEIGHT_MALL + 40),
             ]), 
             Point2::from_slice_const([
                 [LENGTH_MALL,                   WIDTH_CROSSOVER + WIDTH_PLATFORM],
