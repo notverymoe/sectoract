@@ -185,16 +185,15 @@ pub fn main() {
     let mut obj_str = "".to_owned();
     let mut vert_count = 0;
     for (section, points) in sector.sections.iter().zip(section_pnts.iter()) {
-        for (i, surface) in section.surfaces.iter().enumerate() {
-
-            vert_count = if i % 2 == 0 {
-                append_ngon_to_obj_str(&mut obj_str, vert_count, points.iter().map(|&v| v.extend(surface.get_height_at_point(v))))
-            } else {
-                append_ngon_to_obj_str(&mut obj_str, vert_count, points.iter().rev().map(|&v| v.extend(surface.get_height_at_point(v))))
-            };
-
+        for part in 0..section.surfaces.len() {
+            build_section_face(
+                part,
+                section,
+                points,
+                |face| { vert_count = append_ngon_to_obj_str(&mut obj_str, vert_count, face) }
+            );
             build_section_edges(
-                i, section, points, 
+                part, section, points, 
                 |e| sector.graph.get(&e).map(|v| &sector.sections[usize::from(v.section)]),
                 |_e, f| { vert_count = append_ngon_to_obj_str(&mut obj_str, vert_count, f.iter().copied()) }
             );
@@ -204,12 +203,27 @@ pub fn main() {
     std::fs::write("test_export_dir/out_surfaces.obj", obj_str).unwrap();
 }
 
+fn build_section_face(
+    part:    usize,
+    section: &Section,
+    points:  &[Point2],
+    mut push_face: impl FnMut(&mut dyn Iterator<Item = Point3>),
+) {
+    let is_floor = part % 2 == 0;
+    let surface = section.surfaces[part];
+    if is_floor {
+        push_face(&mut points.iter().map(|&v| v.extend(surface.get_height_at_point(v))))
+    } else {
+        push_face(&mut points.iter().rev().map(|&v| v.extend(surface.get_height_at_point(v))))
+    };
+}
+
 fn build_section_edges<'a>(
     part:    usize,
     section: &Section,
     points:  &[Point2],
     try_get_connection: impl Fn(IdentifierEdgeHalf) -> Option<&'a Section>,
-    mut push: impl FnMut(IdentifierEdgeHalf, &[Point3]),
+    mut push_face: impl FnMut(IdentifierEdgeHalf, &[Point3]),
 ) {
     let surf_curr = &section.surfaces[part];
 
@@ -221,7 +235,7 @@ fn build_section_edges<'a>(
                 let surf_neigh = &section_other.surfaces[section_other.surfaces.len() - 1];
                 let height_neigh = surf_neigh.get_height_at_edge(edge);
                 if is_edge_under(height_neigh, height_edge) {
-                    do_push_face(&mut push, edge, height_neigh, height_edge);
+                    do_push_face(&mut push_face, edge, height_neigh, height_edge);
                 }
             } else {
                 continue;
@@ -235,7 +249,7 @@ fn build_section_edges<'a>(
     for edge in points.iter().enumerate().map(|(i, &v)| IdentifierEdgeHalf::new(v, points[(i+1) % points.len()])) {
         let height_edge = surf_curr.get_height_at_edge(edge);
         if let Some(height_target) = get_target_heights(part, section, edge, height_edge, &try_get_connection) {
-            do_push_face(&mut push, edge, height_edge, height_target);
+            do_push_face(&mut push_face, edge, height_edge, height_target);
         }
     }
 }
