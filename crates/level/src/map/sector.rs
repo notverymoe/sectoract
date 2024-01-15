@@ -10,6 +10,14 @@ pub struct Sector {
     pub sections: Vec<Section>,
 }
 
+impl Sector {
+
+    pub fn iter_section_ids(&self) -> impl Iterator<Item = IdentifierSection> {
+        (0..self.sections.len()).map(|v| IdentifierSection::from_raw(v as u16))
+    }
+
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct EdgeHalf {
     pub next:    Point2,

@@ -2,9 +2,7 @@
 
 use std::collections::HashMap;
 
-use crate::map::{Point2, Section, Sector, IdentifierEdgeHalf, EdgeHalf, IdentifierSection};
-
-use super::extract_boundry_from_sector;
+use crate::{map::{Point2, Section, Sector, IdentifierEdgeHalf, EdgeHalf, IdentifierSection}, geo::extract_sector_contour};
 
 #[derive(Debug, Default)]
 pub struct SectorBuilder {
@@ -57,7 +55,7 @@ impl SectorBuilder {
             let key_rev = key.with_reverse();
             if !graph.contains_key(&key_rev) {
                 if bounds.is_empty() {
-                    extract_boundry_from_sector(&mut bounds, key_rev, &edges);
+                    extract_sector_contour(&mut bounds, key_rev, &edges);
                 } else if !bounds.contains(&key_rev) {
                     return Err("Multiple sector boundries detected.".to_owned());
                 }

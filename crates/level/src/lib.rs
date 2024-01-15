@@ -41,4 +41,5 @@
 )]
 
 pub mod map;
+pub mod geo;
 pub mod util;

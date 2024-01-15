@@ -4,8 +4,36 @@
 
 use std::{fmt::Write, path::Path as FSPath};
 
-use sectoract_level::map::{Point2, Point3};
+use sectoract_level::{map::{Point2, Point3, IdentifierEdgeHalf}, geo::FaceWriter};
 use svg::{Document, node::element::{path::Data, Path, Definitions, Marker, Group}};
+
+#[derive(Debug, Default, Clone)]
+pub struct ObjFaceWriter {
+    output: String,
+    vert_count: usize,
+}
+
+impl ObjFaceWriter {
+    
+    pub fn output(&self) -> &str {
+        &self.output
+    }
+
+    pub fn vert_count(&self) -> usize {
+        self.vert_count
+    }
+
+}
+
+impl FaceWriter for ObjFaceWriter {
+    fn add_surf(&mut self, _part: usize, face: impl IntoIterator<Item = Point3>) {
+        self.vert_count = append_ngon_to_obj_str(&mut self.output, self.vert_count, face.into_iter());
+    }
+
+    fn add_wall(&mut self, _part: usize, _edge: IdentifierEdgeHalf, face: impl IntoIterator<Item = Point3>) {
+        self.vert_count = append_ngon_to_obj_str(&mut self.output, self.vert_count, face.into_iter());
+    }
+}
 
 pub fn append_ngon_to_obj_str(out: &mut String, vert_count: usize, face: impl Iterator<Item = Point3>) -> usize {
     let mut len = 0;
