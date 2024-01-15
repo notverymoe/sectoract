@@ -209,52 +209,50 @@ fn build_section_edges<'a>(
     section: &Section,
     points:  &[Point2],
     try_get_connection: impl Fn(IdentifierEdgeHalf) -> Option<&'a Section>,
-    mut push_edge:      impl FnMut(IdentifierEdgeHalf, &[Point3]),
+    mut push: impl FnMut(IdentifierEdgeHalf, &[Point3]),
 ) {
-    let is_floor = part % 2 == 0;
-    if !is_floor {
-        return; // TODO ceiling to neighbour
-    }
-
     let surf_curr = &section.surfaces[part];
 
-    // TODO triangle edges
+    let is_top = part + 1 == section.surfaces.len();
+    if is_top {
+        for edge in points.iter().enumerate().map(|(i, &v)| IdentifierEdgeHalf::new(v, points[(i+1) % points.len()])) {
+            let height_edge = surf_curr.get_height_at_edge(edge);
+            if let Some(section_other) = try_get_connection(edge.with_reverse()) {
+                let surf_neigh = &section_other.surfaces[section_other.surfaces.len() - 1];
+                let height_neigh = surf_neigh.get_height_at_edge(edge);
+                if is_edge_under(height_neigh, height_edge) {
+                    do_push_face(&mut push, edge, height_neigh, height_edge);
+                }
+            } else {
+                continue;
+            }
+        }
+    }
+
+    let is_floor = part % 2 == 0;
+    if !is_floor { return; }
+
     for edge in points.iter().enumerate().map(|(i, &v)| IdentifierEdgeHalf::new(v, points[(i+1) % points.len()])) {
         let height_edge = surf_curr.get_height_at_edge(edge);
-        if let Some(height_targ) = get_target_heights(part, section, edge, height_edge, &try_get_connection) {
-            match (height_edge[0] == height_targ[0], height_edge[1] == height_targ[1]) {
-                (true, true) => continue, // Edge matches
-                (true, false) => {
-                    // Tri
-                    push_edge(edge, &[
-                        edge.prev().extend(height_edge[0]),
-                        edge.next().extend(height_targ[1]),
-                        edge.next().extend(height_edge[1]),
-                    ]);
-                },
-                (false, true) => {
-                    // Tri
-                    push_edge(edge, &[
-                        edge.prev().extend(height_edge[0]),
-                        edge.prev().extend(height_targ[0]),
-                        edge.next().extend(height_edge[1]),
-                    ]);
-                },
-                (false, false) => {
-                    // Quad
-                    push_edge(edge, &[
-                        edge.prev().extend(height_edge[0]),
-                        edge.prev().extend(height_targ[0]),
-                        edge.next().extend(height_targ[1]),
-                        edge.next().extend(height_edge[1]),
-                    ]);
-                }
-            }
-
+        if let Some(height_target) = get_target_heights(part, section, edge, height_edge, &try_get_connection) {
+            do_push_face(&mut push, edge, height_edge, height_target);
         }
-
-
     }
+}
+
+fn do_push_face(push_face: &mut impl FnMut(IdentifierEdgeHalf, &[Point3]), edge: IdentifierEdgeHalf, source: [i16; 2], target: [i16; 2]) {
+    let p = [
+        edge.prev().extend(source[0]),
+        edge.prev().extend(target[0]),
+        edge.next().extend(target[1]),
+        edge.next().extend(source[1]),
+    ];
+    match (source[0] == target[0], source[1] == target[1]) {
+        (true,  true ) => { /* No face */ }, 
+        (true,  false) => { /* Tri */  push_face(edge, &[p[0], p[2], p[3]]); },
+        (false, true ) => { /* Tri */  push_face(edge, &[p[0], p[1], p[3]]); },
+        (false, false) => { /* Quad */ push_face(edge, &p); }
+    };
 }
 
 fn get_target_heights<'a>(
