@@ -103,7 +103,7 @@ fn get_target_heights<'a>(
         let surf_neigh = &section_other.surfaces[0];
         let height_neigh = surf_neigh.get_height_at_edge(edge);
 
-        // If we are below the neighbour's floor, then the edge goes upwards
+        // If we are below the neighbour's base, then the edge goes upwards
         if is_edge_under(height_floor, height_neigh) {
             // If the ceiling above is under the neighbour's base then we go up to it,
             // otherwise we only go up to the neighbour's base
