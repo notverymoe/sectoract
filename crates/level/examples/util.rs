@@ -7,32 +7,108 @@ use std::{fmt::Write, path::Path as FSPath};
 use sectoract_level::{map::{Point2, Point3, IdentifierEdgeHalf}, geo::FaceWriter};
 use svg::{Document, node::element::{path::Data, Path, Definitions, Marker, Group}};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct ObjFaceWriter {
-    output: String,
+    name: String, 
+    
+    output_obj: String,
+    output_mtl: String,
+
     vert_count: usize,
+    mat_count: usize,
+
+    primary_slice: usize,
+    secondary_slice: usize,
 }
 
 impl ObjFaceWriter {
+
+    pub fn new(name: &str, section_count: usize, part_count: usize) -> Self {
+        Self{
+            output_obj: format!("mtllib {name}.mtl\n"),
+            output_mtl: Default::default(),
+            vert_count: 0,
+            mat_count: 0,
+            name: name.to_owned(),
+
+            primary_slice: section_count,
+            secondary_slice: part_count
+        }
+    }
+
+
+    pub fn set_part_colour(&mut self, section: usize, part: usize) {
+
+        let section_factor = (section % self.primary_slice  ) as f32 * 360.0/self.primary_slice as f32;
+        let part_factor    = (part    % self.secondary_slice) as f32 * (360.0 / (self.primary_slice as f32))/(self.secondary_slice as f32);
+
+        let [r, g, b] = Self::hsv_to_rgb([
+            section_factor + part_factor,
+            1.0,
+            1.0,   
+        ]);
+
+        let id = self.mat_count;
+        self.mat_count += 1;
+
+        writeln!(&mut self.output_mtl, "newmtl mat_{id}").unwrap();
+        writeln!(&mut self.output_mtl, "Kd {r} {g} {b}").unwrap();
+        writeln!(&mut self.output_obj, "usemtl mat_{id}").unwrap();
+    }
     
-    pub fn output(&self) -> &str {
-        &self.output
+    pub fn write(&self, folder: &str) -> std::io::Result<()> {
+        let name = &self.name;
+        std::fs::write(format!("{folder}/{name}.obj"), &self.output_obj)?;
+        std::fs::write(format!("{folder}/{name}.mtl"), &self.output_mtl)?;
+        Ok(())
     }
 
     pub fn vert_count(&self) -> usize {
         self.vert_count
     }
 
+    pub fn mat_count(&self) -> usize {
+        self.mat_count
+    }
+
+
+    fn hsv_to_rgb(hsv: [f32; 3]) -> [f32; 3] {
+        let [h, s, v] = hsv;
+        let c = v * s;
+        let x = c * (1.0 - ((h/60.0) % 2.0 - 1.0).abs());
+        let m = v - c;
+
+        let [r, g, b] = if h < 60.0 {
+            [c, x, 0.0]
+        } else if h < 120.0 {
+            [x, c, 0.0]
+        } else if h < 180.0 {
+            [0.0, c, x] 
+        } else if h < 240.0 {
+            [0.0, x, c]
+        } else if h < 300.0 {
+            [x, 0.0, c]
+        } else {
+            [c, 0.0, x]
+        };
+
+        [r+m, g+m, b+m]
+    }
+
 }
 
 impl FaceWriter for ObjFaceWriter {
-    fn add_surf(&mut self, _part: usize, face: impl IntoIterator<Item = Point3>) {
-        self.vert_count = append_ngon_to_obj_str(&mut self.output, self.vert_count, face.into_iter());
+
+    fn add_surf(&mut self, section: usize, part: usize, face: impl IntoIterator<Item = Point3>) {
+        self.set_part_colour(section, part);
+        self.vert_count = append_ngon_to_obj_str(&mut self.output_obj, self.vert_count, face.into_iter());
     }
 
-    fn add_wall(&mut self, _part: usize, _edge: IdentifierEdgeHalf, face: impl IntoIterator<Item = Point3>) {
-        self.vert_count = append_ngon_to_obj_str(&mut self.output, self.vert_count, face.into_iter());
+    fn add_wall(&mut self, section: usize, part: usize, _edge: IdentifierEdgeHalf, face: impl IntoIterator<Item = Point3>) {
+        self.set_part_colour(section, part);
+        self.vert_count = append_ngon_to_obj_str(&mut self.output_obj, self.vert_count, face.into_iter());
     }
+
 }
 
 pub fn append_ngon_to_obj_str(out: &mut String, vert_count: usize, face: impl Iterator<Item = Point3>) -> usize {

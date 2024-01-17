@@ -16,39 +16,45 @@ pub fn extract_section_contour<S: core::hash::BuildHasher>(graph: &HashMap<Ident
 }
 
 pub fn build_section_faces<'a>(
-    section: &Section,
+    section_id: usize,
+    sections: &[Section],
     points: &[Point2],
     try_get_connection: impl Fn(IdentifierEdgeHalf) -> Option<&'a Section>,
     writer: &mut impl FaceWriter,
 ) {
+    let section = &sections[section_id];
     for part in 0..section.surfaces.len() {
-        build_section_surfaces(part, section, points, writer);
-        build_section_edges(part, section, points, &try_get_connection, writer);
+        build_section_surfaces(section_id, part, sections, points, writer);
+        build_section_edges(section_id, part, sections, points, &try_get_connection, writer);
     }
 }
 
 pub fn build_section_surfaces(
+    section_id: usize,
     part:    usize,
-    section: &Section,
+    sections: &[Section],
     points:  &[Point2],
     writer: &mut impl FaceWriter,
 ) {
     let is_floor = part % 2 == 0;
+    let section = &sections[section_id];
     let surface = section.surfaces[part];
     if is_floor {
-        writer.add_surf(part, &mut points.iter().map(|&v| v.extend(surface.get_height_at_point(v))));
+        writer.add_surf(section_id, part, &mut points.iter().map(|&v| v.extend(surface.get_height_at_point(v))));
     } else {
-        writer.add_surf(part, &mut points.iter().rev().map(|&v| v.extend(surface.get_height_at_point(v))));
+        writer.add_surf(section_id, part, &mut points.iter().rev().map(|&v| v.extend(surface.get_height_at_point(v))));
     };
 }
 
 pub fn build_section_edges<'a>(
+    section_id: usize,
     part:    usize,
-    section: &Section,
+    sections: &[Section],
     points:  &[Point2],
     try_get_connection: &impl Fn(IdentifierEdgeHalf) -> Option<&'a Section>,
     writer: &mut impl FaceWriter,
 ) {
+    let section = &sections[section_id];
     let surf_curr = &section.surfaces[part];
 
     let is_top = part + 1 == section.surfaces.len();
@@ -59,7 +65,7 @@ pub fn build_section_edges<'a>(
                 let surf_neigh = &section_other.surfaces[section_other.surfaces.len() - 1];
                 let height_neigh = surf_neigh.get_height_at_edge(edge);
                 if is_edge_under(height_neigh, height_edge) {
-                    do_push_face(writer, part, edge, height_neigh, height_edge);
+                    do_push_face(writer, section_id, part, edge, height_neigh, height_edge);
                 }
             }
         }
@@ -71,12 +77,12 @@ pub fn build_section_edges<'a>(
     for edge in points.iter().enumerate().map(|(i, &v)| IdentifierEdgeHalf::new(v, points[(i+1) % points.len()])) {
         let height_edge = surf_curr.get_height_at_edge(edge);
         if let Some(height_target) = get_target_heights(part, section, edge, height_edge, &try_get_connection) {
-            do_push_face(writer, part, edge, height_edge, height_target);
+            do_push_face(writer, section_id, part, edge, height_edge, height_target);
         }
     }
 }
 
-fn do_push_face(writer: &mut impl FaceWriter, part: usize, edge: IdentifierEdgeHalf, source: [i16; 2], target: [i16; 2]) {
+fn do_push_face(writer: &mut impl FaceWriter, section_id: usize, part: usize, edge: IdentifierEdgeHalf, source: [i16; 2], target: [i16; 2]) {
     let p = [
         edge.prev().extend(source[0]),
         edge.prev().extend(target[0]),
@@ -85,9 +91,9 @@ fn do_push_face(writer: &mut impl FaceWriter, part: usize, edge: IdentifierEdgeH
     ];
     match (source[0] == target[0], source[1] == target[1]) {
         (true,  true ) => { /* No face */ }, 
-        (true,  false) => { /* Tri */  writer.add_wall(part, edge, [p[0], p[2], p[3]]); },
-        (false, true ) => { /* Tri */  writer.add_wall(part, edge, [p[0], p[1], p[3]]); },
-        (false, false) => { /* Quad */ writer.add_wall(part, edge, p); }
+        (true,  false) => { /* Tri */  writer.add_wall(section_id, part, edge, [p[0], p[2], p[3]]); },
+        (false, true ) => { /* Tri */  writer.add_wall(section_id, part, edge, [p[0], p[1], p[3]]); },
+        (false, false) => { /* Quad */ writer.add_wall(section_id, part, edge, p); }
     };
 }
 

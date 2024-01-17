@@ -181,9 +181,9 @@ pub fn main() {
 
     // // Build Surfaces // //
 
-    let mut obj = ObjFaceWriter::default();
-    for (section, points) in sector.sections.iter().zip(section_pnts.iter()) {
-        build_section_faces(section, points, |e| sector.graph.get(&e).map(|v| &sector.sections[usize::from(v.section)]), &mut obj);
+    let mut obj = ObjFaceWriter::new("out_surfaces", sector.sections.len(), sector.sections.iter().map(|v| v.surfaces.len()).max().unwrap_or(1));
+    for (section, points) in (0..sector.sections.len()).zip(section_pnts.iter()) {
+        build_section_faces(section, &sector.sections, points, |e| sector.graph.get(&e).map(|v| &sector.sections[usize::from(v.section)]), &mut obj);
     }
-    std::fs::write("test_export_dir/out_surfaces.obj", obj.output()).unwrap();
+    obj.write("test_export_dir/").unwrap();
 }
