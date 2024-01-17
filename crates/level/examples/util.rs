@@ -31,7 +31,7 @@ impl ObjFaceWriter {
             mat_count: 0,
             name: name.to_owned(),
 
-            primary_slice: section_count,
+            primary_slice: section_count * 2,
             secondary_slice: part_count
         }
     }
@@ -39,8 +39,8 @@ impl ObjFaceWriter {
 
     pub fn set_part_colour(&mut self, section: usize, part: usize) {
 
-        let section_factor = (section % self.primary_slice  ) as f32 * 360.0/self.primary_slice as f32;
-        let part_factor    = (part    % self.secondary_slice) as f32 * (360.0 / (self.primary_slice as f32))/(self.secondary_slice as f32);
+        let section_factor = ((section * 2) % self.primary_slice  ) as f32 * 360.0/self.primary_slice as f32;
+        let part_factor    = (part          % self.secondary_slice) as f32 * (360.0 / (self.primary_slice as f32))/(self.secondary_slice as f32);
 
         let [r, g, b] = Self::hsv_to_rgb([
             section_factor + part_factor,
