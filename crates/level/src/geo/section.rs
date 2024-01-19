@@ -109,20 +109,17 @@ fn get_target_heights<'a>(
         let surf_neigh = &section_other.surfaces[0];
         let height_neigh = surf_neigh.get_height_at_edge(edge);
 
-        // If we are below the neighbour's base, then the edge goes upwards
-        if is_edge_under(height_floor, height_neigh) {
-            // If the ceiling above is under the neighbour's base then we go up to it,
-            // otherwise we only go up to the neighbour's base
-            let height_above = section.surfaces[part+1].get_height_at_edge(edge);
-            if is_edge_under(height_above, height_neigh) {
-                Some(height_above)
-            } else {
-                Some(height_neigh)
-            }
-        } else if part != 0 {
+        // If we are not the base, then our wall goes to the previus ceiling
+        if part != 0 {
+            // SAFE: part > 0
             let height_ceil = section.surfaces[part-1].get_height_at_edge(edge);
+            // If it's occluded, then we hide the wall
             (!is_edge_occluded_by_section(section_other, edge, height_floor, height_ceil)).then_some(height_ceil)
+        } else if !is_edge_under(height_floor, height_neigh) {
+            // If we are the base, and our height is above the neighbour's base, we need to stretch down to it.
+            Some(height_neigh)
         } else {
+            // Otherwise, hide the wall
             None
         }
     } else {
