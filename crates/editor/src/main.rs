@@ -119,13 +119,13 @@ fn ui_test_system(
             ));
             ui.separator();
             if r_cursor.is_active {
-                ui.label(format!(
-                    "X: {} | Y: {}", 
-                    format_coord(r_cursor.pos_grid.x as f32, Some(grid_size)), 
-                    format_coord(r_cursor.pos_grid.y as f32, Some(grid_size)),
-                ));
+                ui.label(format!("X: {}", format_coord(r_cursor.pos_grid.x as f32, Some(grid_size))));
+                ui.separator();
+                ui.label(format!("Y: {}", format_coord(r_cursor.pos_grid.y as f32, Some(grid_size))));
             } else {
-                ui.label("X: -------- | Y: -------- ");
+                ui.label("X: ---------");
+                ui.separator();
+                ui.label("Y: --------- ");
             } 
         })
     }).response.rect.height() as u32;
@@ -139,12 +139,13 @@ fn ui_test_system(
 
 }
 
-fn format_coord(v: f32, scale: Option<f32>) -> String {
-    let v = v/40.0;
-    let scale = scale.unwrap_or(v)/40.0;
-    if scale < 0.1 {
-        format!("{: >6.2}cm", v*100.0)
+fn format_coord(val: f32, scale: Option<f32>) -> String {
+    // TODO pad sign
+    let scale = scale.unwrap_or(val.abs())/40.0;
+    let val   = val/40.0;
+    if scale < 0.1 && (val.abs() < 10.0) {
+        format!("{: >7.2}cm", val*100.0)
     } else {
-        format!("{: >6.2}m ", v)
+        format!("{: >7.2}m ", val)
     }.to_owned()
 }
