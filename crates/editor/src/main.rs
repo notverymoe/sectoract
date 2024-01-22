@@ -20,8 +20,9 @@ fn main() {
         // Systems that create Egui widgets should be run during the `CoreSet::Update` set,
         // or after the `EguiSet::BeginFrame` system (which belongs to the `CoreSet::PreUpdate` set).
         .add_systems(Startup, setup)
-        .add_systems(PreUpdate, (ui::update_physical_scale, control_grid, ui::update_grid_cursor).chain())
-        .add_systems(Update, (ui_test_system, ui::update_camera_reserved_space, gizmo_grid).chain())
+        .add_systems(PreUpdate,  (ui::update_physical_scale, input_grid_size, ui::update_grid_cursor).chain())
+        .add_systems(Update,     (ui_build, ui::update_camera_reserved_space).chain())
+        .add_systems(PostUpdate, (draw_2d_grid, draw_2d_cursor))
         .run();
 }
 
@@ -35,7 +36,7 @@ fn setup(mut commands: Commands) {
     });
 }
 
-fn control_grid(
+fn input_grid_size(
     keyboard: Res<Input<KeyCode>>,
     mut r_grid_settings: ResMut<ui::GridSettings>,
 ) {
@@ -50,63 +51,81 @@ fn control_grid(
 
 }
 
-fn gizmo_grid(
+fn draw_2d_grid(
     mut gizmos: Gizmos,
     r_grid_settings: Res<ui::GridSettings>,
-    r_cursor: Res<ui::GridCursor>,
-    q_cameras: Query<&Camera>,
+    q_cameras: Query<(&Camera, &GlobalTransform)>,
 ) {
-    let size_grid = r_grid_settings.size.get_units();
-    let size_view = q_cameras.single().logical_viewport_size().unwrap_or(Vec2::ZERO).as_uvec2();
+    let (camera, camera_transform) = q_cameras.single();
 
-    for x in (0..size_view.x).step_by(size_grid as usize) {
-        gizmos.line_2d(Vec2::new(x as f32, 0.0), UVec2::new(x, size_view.y).as_vec2(), Color::WHITE.with_a(0.1));
-    }
+    let size = r_grid_settings.size.get_units() as f32;
+    let from = camera_transform.translation().truncate();
+    let to   = from + camera.physical_viewport_size().unwrap_or(UVec2::ZERO).as_vec2();
+    draw::grid_snapped(&mut gizmos, Vec2::ZERO, from, to, Vec2::new(size, size), Color::WHITE.with_a(0.1));
+}
 
-    for y in (0..size_view.y).step_by(size_grid as usize) {
-        gizmos.line_2d(Vec2::new(0.0, y as f32), UVec2::new(size_view.x, y).as_vec2(), Color::WHITE.with_a(0.1));
-    }
+fn draw_2d_cursor(
+    mut gizmos: Gizmos,
+    r_cursor: Res<ui::GridCursor>,
+) {
 
     if r_cursor.is_active {
         gizmos.circle_2d(r_cursor.pos_grid.as_vec2(), 4.0, Color::WHITE);
     }
 }
 
-fn ui_test_system(
+fn ui_build(
     mut contexts: EguiContexts,
     mut r_layout: ResMut<ui::ScreenLayout>,
     r_cursor: Res<ui::GridCursor>,
-    r_grid_settings: Res<ui::GridSettings>,
+    mut r_grid_settings: ResMut<ui::GridSettings>,
     mut exit: EventWriter<AppExit>
 ) {
     let ctx = contexts.ctx_mut();
 
     r_layout.space.top = egui::TopBottomPanel::top("top").show(ctx, |ui| {
-        ui.menu_button("File", |ui| {
-            if ui.button("New").clicked() {
-                // TODO
-                println!("New");
-            }
-            ui.separator();
-            if ui.button("Open").clicked() {
-                // TODO
-                println!("Open");
-            }
-            ui.separator();
-            if ui.button("Save").clicked() {
-                // TODO
-                println!("Save");
-            }
-            if ui.button("Save As...").clicked() {
-                // TODO
-                println!("Save As...");
-            }
-            ui.separator();
-            if ui.button("Exit").clicked() {
-                exit.send(AppExit);
-            }
+        ui.horizontal(|ui| {
+            ui.menu_button("File", |ui| {
+                if ui.button("New").clicked() {
+                    // TODO
+                    println!("New");
+                }
+                ui.separator();
+                if ui.button("Open").clicked() {
+                    // TODO
+                    println!("Open");
+                }
+                ui.separator();
+                if ui.button("Save").clicked() {
+                    // TODO
+                    println!("Save");
+                }
+                if ui.button("Save As...").clicked() {
+                    // TODO
+                    println!("Save As...");
+                }
+                ui.separator();
+                if ui.button("Exit").clicked() {
+                    exit.send(AppExit);
+                }
+            });
+            ui.menu_button("View", |ui| {
+                if ui.button("Increase Grid Size").clicked() {
+                    r_grid_settings.size.change(1);
+                }
+                if ui.button("Decrease Grid Size").clicked() {
+                    r_grid_settings.size.change(-1);
+                }
+            });
         });
     }).response.rect.height() as u32;
+
+    egui::Window::new("Tools")
+        .resizable(false)
+        .anchor(Align2::LEFT_TOP, egui::Vec2::new(4.0, 4.0))
+        .show(ctx, |ui| {
+            ui.label("Tools");
+        });
 
     ctx.style_mut(|s| s.override_text_style = Some(egui::TextStyle::Monospace));
 
@@ -129,14 +148,6 @@ fn ui_test_system(
             } 
         })
     }).response.rect.height() as u32;
-
-    egui::Window::new("Tools")
-        .resizable(false)
-        .anchor(Align2::LEFT_TOP, egui::Vec2::new(4.0, 4.0))
-        .show(ctx, |ui| {
-            ui.label("Tools");
-        });
-
 }
 
 fn format_coord(val: f32, scale: Option<f32>) -> String {

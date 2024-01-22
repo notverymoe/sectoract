@@ -1,4 +1,4 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
-pub mod ui;
-pub mod draw;
+mod grid;
+pub use grid::*;
