@@ -36,18 +36,22 @@ impl GridSize {
         *self = Self::from_index(self.to_index() + delta);
     }
 
+    #[must_use]
     pub fn snap_to(self, pos: Vec2) -> IVec2 {
         (pos / (self.get_units() as f32)).round().as_ivec2() * (self.get_units() as i32)
     }
 
+    #[must_use]
     pub fn snap_to_ceil(self, pos: Vec2) -> IVec2 {
         (pos / (self.get_units() as f32)).ceil().as_ivec2() * (self.get_units() as i32)
     }
 
+    #[must_use]
     pub fn snap_to_floor(self, pos: Vec2) -> IVec2 {
         (pos / (self.get_units() as f32)).floor().as_ivec2() * (self.get_units() as i32)
     }
 
+    #[must_use]
     pub fn snap_to_bounds(self, pos: Vec2, min: Vec2, max: Vec2) -> IVec2 {
         let pos = self.snap_to(pos);
         let min = self.snap_to_ceil(min);
@@ -55,11 +59,13 @@ impl GridSize {
         pos.max(min).min(max)
     }
 
-    pub fn get_units(self) -> u32 {
+    #[must_use]
+    pub const fn get_units(self) -> u32 {
         self as u32
     }
 
-    pub fn to_index(self) -> i32 {
+    #[must_use]
+    pub const fn to_index(self) -> i32 {
         match self {
             GridSize::Scale01 =>  0,
             GridSize::Scale02 =>  1,
@@ -75,6 +81,7 @@ impl GridSize {
         }
     }
 
+    #[must_use]
     pub fn from_index(v: i32) -> Self {
         match v.max(0).min(10) {
             0 => GridSize::Scale01,
@@ -108,6 +115,7 @@ pub struct GridCursor {
 
 impl GridCursor {
 
+    #[must_use]
     pub fn from_camera(
         pos_cursor_logical: Vec2,
         camera: &Camera,

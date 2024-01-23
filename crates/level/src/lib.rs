@@ -38,6 +38,8 @@
     clippy::cast_sign_loss,
     clippy::cast_precision_loss,
     clippy::cast_possible_wrap,
+    // clippy::needless_pass_by_value, // Bevy systems need this
+    // clippy::shadow_unrelated,       // Egui lambda params
 )]
 
 pub mod map;

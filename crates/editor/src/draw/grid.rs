@@ -21,5 +21,5 @@ pub fn grid_simple(gizmos: &mut Gizmos, from: Vec2, to: Vec2, size: Vec2, colour
 pub fn grid_snapped(gizmos: &mut Gizmos, offset: Vec2, from: Vec2, to: Vec2, size: Vec2, colour: Color) {
     let from = offset + ((from - offset)/size).floor()*size;
     let to   = offset + ((  to - offset)/size).ceil() *size;
-    grid_simple(gizmos, from, to, size, colour)
+    grid_simple(gizmos, from, to, size, colour);
 }
