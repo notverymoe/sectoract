@@ -1,13 +1,13 @@
 // Copyright 2023 Natalie Baker // AGPLv3 //
 
 use bevy::{
-    math::{Vec2, IVec2}, 
+    math::{IVec2, Vec2, Vec3}, 
     ecs::{
         system::{Resource, Query, Res, ResMut}, 
         query::With
     }, 
     window::{Window, PrimaryWindow}, 
-    render::camera::Camera, 
+    render::camera::{Camera, CameraProjection, OrthographicProjection}, 
     transform::components::GlobalTransform
 };
 
@@ -109,31 +109,55 @@ pub struct GridSettings {
 #[derive(Debug, Default, Clone, Copy, Resource)]
 pub struct GridCursor {
     pub is_active: bool,
+    pub pos_viewport: Vec2,
     pub pos_world: Vec2,
     pub pos_grid:  IVec2,
+    pub norm_viewport: Vec2,
+    pub delta_viewport: Vec2,
+    pub delta_viewport_scaled: Vec2,
 }
 
 impl GridCursor {
 
     #[must_use]
-    pub fn from_camera(
+    pub fn update_from_camera(
+        self,
         pos_cursor_logical: Vec2,
         camera: &Camera,
         camera_transform: &GlobalTransform,
         grid_settings:    &GridSettings,
         layout:           &ScreenLayout,
+        projection: &OrthographicProjection
     ) -> Self {
+        let viewport_size   = camera.logical_viewport_size().unwrap_or(Vec2::ONE);
+        let viewport_offset = projection.viewport_origin * viewport_size;
+
         let pos_viewport = pos_cursor_logical - layout.to_logical(layout.space.viewport_origin());
-        let pos_min = camera_transform.translation().truncate();
-        let pos_max = pos_min + camera.logical_viewport_size().unwrap_or(Vec2::ONE);
+        let pos_min = camera_transform.translation().truncate() - viewport_offset*projection.scale;
+        let pos_max = pos_min + viewport_size*projection.scale;
 
         let pos_world = camera.viewport_to_world_2d(camera_transform, pos_viewport).unwrap_or(Vec2::ZERO).max(pos_min).min(pos_max);
         let pos_grid  = grid_settings.size.snap_to_bounds(pos_world, pos_min, pos_max);
 
+        let norm_viewport = pos_viewport / viewport_size;
+
+        let delta_viewport = pos_viewport - self.pos_viewport;
+
+        let delta_viewport_norm = delta_viewport / camera.logical_viewport_size().unwrap();
+
+        let delta_viewport_scaled = Vec2::new(
+             delta_viewport_norm.x * projection.area.width(),
+            -delta_viewport_norm.y * projection.area.height(),
+        );
+
         GridCursor{
             is_active: true,
+            pos_viewport,
             pos_world,
-            pos_grid
+            pos_grid,
+            norm_viewport,
+            delta_viewport,
+            delta_viewport_scaled,
         }
     }
 }
@@ -142,14 +166,14 @@ pub fn update_grid_cursor(
     mut r_cursor: ResMut<GridCursor>,
     r_grid_settings: Res<GridSettings>,
     r_layout: Res<ScreenLayout>,
-    q_cameras: Query<(&Camera, &GlobalTransform)>,
+    q_cameras: Query<(&Camera, &OrthographicProjection, &GlobalTransform)>,
     q_windows: Query<&Window, With<PrimaryWindow>>,
 ) {
     let window = q_windows.single();
     // TODO (?) pin cursor pos to closest edge
     if let Some(cursor_pos) = window.cursor_position() {
-        let (camera, camera_transform) = q_cameras.single();
-        *r_cursor = GridCursor::from_camera(cursor_pos, camera, camera_transform, &r_grid_settings, &r_layout);
+        let (camera, camera_proj, camera_transform) = q_cameras.single();
+        *r_cursor = r_cursor.update_from_camera(cursor_pos, camera, camera_transform, &r_grid_settings, &r_layout, camera_proj);
     } else {
         r_cursor.is_active = false;
     }

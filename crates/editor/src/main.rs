@@ -43,10 +43,18 @@
 )]
 
 use bevy::app::AppExit;
+use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
 use bevy_egui::egui::Align2;
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
-use sectoract_editor::{draw, ui};
+use sectoract_editor::ui::GridCursor;
+use sectoract_editor::{data, draw, ui};
+use sectoract_level::map::Sector;
+
+#[derive(Resource)]
+pub struct SectorResource {
+    pub sector: Sector,
+}
 
 fn main() {
     App::new()
@@ -55,6 +63,9 @@ fn main() {
         .init_resource::<ui::ScreenLayout>()
         .init_resource::<ui::GridSettings>()
         .init_resource::<ui::GridCursor>()
+        .insert_resource(SectorResource{
+            sector: data::get_test_sector(),
+        })
         .insert_resource(GizmoConfig{
             line_width: 0.5,
             ..Default::default()
@@ -62,21 +73,19 @@ fn main() {
         // Systems that create Egui widgets should be run during the `CoreSet::Update` set,
         // or after the `EguiSet::BeginFrame` system (which belongs to the `CoreSet::PreUpdate` set).
         .add_systems(Startup, setup)
-        .add_systems(PreUpdate,  (ui::update_physical_scale, input_grid_size, ui::update_grid_cursor).chain())
+        .add_systems(PreUpdate,  (ui::update_physical_scale, input_grid_size, ui::update_grid_cursor, input_camera).chain())
         .add_systems(Update,     (ui_build, ui::update_camera_reserved_space).chain())
-        .add_systems(PostUpdate, (draw_2d_grid, draw_2d_cursor))
+        .add_systems(PostUpdate, (draw_2d_grid, draw_2d_cursor, draw_2d_sector))
         .run();
 }
 
+// // Setup // //
+
 fn setup(mut commands: Commands) {
-    commands.spawn(Camera2dBundle{
-        projection: OrthographicProjection{
-            viewport_origin: Vec2::ZERO,
-            ..Default::default()
-        },
-        ..Default::default()
-    });
+    commands.spawn(Camera2dBundle::default());
 }
+
+// // Input // //
 
 fn input_grid_size(
     keyboard: Res<Input<KeyCode>>,
@@ -93,15 +102,62 @@ fn input_grid_size(
 
 }
 
+fn input_camera(
+    r_input_mouse: Res<Input<MouseButton>>,
+    r_cursor: Res<GridCursor>,
+    mut q_cameras: Query<(&mut OrthographicProjection, &mut Transform), With<Camera>>,
+    mut scroll_evr: EventReader<MouseWheel>,
+    time: Res<Time>,
+) {
+
+    if r_input_mouse.pressed(MouseButton::Middle) {
+        let delta = r_cursor.delta_viewport_scaled;
+        q_cameras.single_mut().1.translation -= delta.extend(0.0);
+    }
+
+    let mut scroll_delta = 0.0;
+    for ev in scroll_evr.read() {
+        scroll_delta += match ev.unit {
+            bevy::input::mouse::MouseScrollUnit::Line  => -ev.y,
+            bevy::input::mouse::MouseScrollUnit::Pixel => -ev.y / 14.0,
+        };
+    }
+
+    if scroll_delta != 0.0 {
+        let (mut projection, mut transform) = q_cameras.single_mut();
+        zoom_camera(&mut projection, &mut transform, r_cursor.pos_world, scroll_delta * time.delta_seconds());
+    }
+
+}
+
+fn zoom_camera(
+    cam_projection: &mut OrthographicProjection, 
+    cam_transform: &mut Transform, 
+    mouse_world: Vec2,
+    amount: f32
+) {
+    //let old_scale = cam_projection.scale;
+    cam_projection.scale = (cam_projection.scale.ln() + amount).exp();
+
+    //let offset_to_mouse = mouse_world.extend(cam_transform.translation.z) - cam_transform.translation;
+    //let distance_to_mouse = offset_to_mouse.length();
+    //let max_move_dist     = (cam_projection.area.size()/old_scale*cam_projection.scale).length() * 0.25;
+    //let offset_scale      = distance_to_mouse.min(max_move_dist)/distance_to_mouse;
+
+    //cam_transform.translation += offset_to_mouse*offset_scale;
+}
+
+// // Draw // //
+
 fn draw_2d_grid(
     mut gizmos: Gizmos,
     r_grid_settings: Res<ui::GridSettings>,
-    q_cameras: Query<(&Camera, &GlobalTransform)>,
+    q_cameras: Query<(&Camera, &OrthographicProjection, &GlobalTransform)>,
 ) {
-    let (camera, camera_transform) = q_cameras.single();
+    let (camera, camera_projection, camera_transform) = q_cameras.single();
 
     let size = r_grid_settings.size.get_units() as f32;
-    let from = camera_transform.translation().truncate();
+    let from = camera_transform.translation().truncate() - camera_projection.viewport_origin*camera_projection.area.size();
     let to   = from + camera.physical_viewport_size().unwrap_or(UVec2::ZERO).as_vec2();
     draw::grid_snapped(&mut gizmos, Vec2::ZERO, from, to, Vec2::new(size, size), Color::WHITE.with_a(0.1));
 }
@@ -115,6 +171,15 @@ fn draw_2d_cursor(
         gizmos.circle_2d(r_cursor.pos_grid.as_vec2(), 4.0, Color::WHITE);
     }
 }
+
+fn draw_2d_sector(
+    mut gizmos: Gizmos,
+    sector_res: Res<SectorResource>,
+) {
+    draw::section_lines(&mut gizmos, &sector_res.sector, Color::RED, Color::GREEN);
+}
+
+// // UI // //
 
 fn ui_build(
     mut contexts: EguiContexts,
@@ -186,7 +251,7 @@ fn ui_build(
             } else {
                 ui.label("X: ---------");
                 ui.separator();
-                ui.label("Y: --------- ");
+                ui.label("Y: ---------");
             } 
         })
     }).response.rect.height() as u32;
