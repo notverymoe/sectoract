@@ -48,12 +48,13 @@ fn extract_pancam_cursor(
 }
 
 fn apply_pancam_viewport(
-    mut q_cameras: Query<(&Camera, &GlobalTransform, &mut PancamViewport)>,
+    mut q_cameras: Query<(&Camera, &mut OrthographicProjection, &GlobalTransform, &mut PancamViewport)>,
 ) {
-    for (camera, transform, mut viewport_pan) in &mut q_cameras {
+    for (camera, projection, transform, mut viewport_pan) in &mut q_cameras {
         let viewport_size_old = camera.logical_viewport_size().unwrap();
         let viewport_size_new = camera.world_to_viewport(transform, (viewport_pan.world_size/2.0 + viewport_pan.world_center).extend(1.0));
 
+        projection.scale
 
 
         viewport_pan.world_center = camera.viewport_to_world_2d(transform, viewport_size*0.5).unwrap();
