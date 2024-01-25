@@ -2949,6 +2949,7 @@ dependencies = [
  "bevy",
  "bevy_egui",
  "sectoract_level",
+ "sectoract_pancam",
 ]
 
 [[package]]
@@ -2958,6 +2959,13 @@ dependencies = [
  "bytemuck",
  "constmuck",
  "svg",
+]
+
+[[package]]
+name = "sectoract_pancam"
+version = "0.1.0"
+dependencies = [
+ "bevy",
 ]
 
 [[package]]

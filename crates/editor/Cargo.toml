@@ -7,3 +7,4 @@ edition = "2021"
 bevy = { version = "0.12" }
 bevy_egui = { git = "https://github.com/mvlabat/bevy_egui.git", rev = "6f844f0c604098b7f7eaf2be3f8ab50b342cb5b6", default-features = false, features = ["default_fonts", "render"] }
 sectoract_level = { path = "../level/" }
+sectoract_pancam = { path = "../pancam/" }

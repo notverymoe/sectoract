@@ -2,18 +2,27 @@
 
 use bevy::{prelude::*, window::PrimaryWindow};
 
-#[derive(Debug, Component)]
-pub struct PancamSettings {
-
-}
-
-#[derive(Debug, Component)]
+#[derive(Debug, Default, Component)]
 pub struct PancamViewport {
-    pub world_center: Vec2,
-    pub world_size:   Vec2,
+    center:        Vec2,
+    size_unscaled: Vec2,
+    scale:         f32,
 }
 
-#[derive(Debug, Component)]
+impl PancamViewport {
+    pub fn pan(&mut self, delta: Vec2) {
+        self.center += delta;
+    }
+
+    pub fn zoom_towards(&mut self, target: Vec2, zoom: f32) {        
+        let scale_new = (self.scale.ln() + zoom).exp();
+        let scale_ratio = scale_new/self.scale;
+        self.center = self.center + (1.0 - scale_ratio)*(target - self.center);
+        self.scale  = scale_new;
+    }
+}
+
+#[derive(Debug, Default, Component)]
 pub struct PancamCursor {
     pub world_pos:      Option<Vec2>,
     pub viewport_pos:   Option<Vec2>,
@@ -21,12 +30,13 @@ pub struct PancamCursor {
 }
 
 fn extract_pancam_viewport(
-    mut q_cameras: Query<(&Camera, &GlobalTransform, &mut PancamViewport)>,
+    mut q_cameras: Query<(&Camera, &OrthographicProjection, &GlobalTransform, &mut PancamViewport)>,
 ) {
-    for (camera, transform, mut viewport_pan) in &mut q_cameras {
+    for (camera, projection, transform, mut viewport_pan) in &mut q_cameras {
         let viewport_size = camera.logical_viewport_size().unwrap();
-        viewport_pan.world_center = camera.viewport_to_world_2d(transform, viewport_size*0.5).unwrap();
-        viewport_pan.world_size   = 2.0*(camera.viewport_to_world_2d(transform, viewport_size).unwrap() - viewport_pan.world_center);
+        viewport_pan.center       = camera.viewport_to_world_2d(transform, viewport_size*0.5).unwrap();
+        viewport_pan.scale        = projection.scale;
+        viewport_pan.size_unscaled = ((2.0*(camera.viewport_to_world_2d(transform, viewport_size).unwrap() - viewport_pan.center))/projection.scale).abs();
     }
 }
 
@@ -48,16 +58,23 @@ fn extract_pancam_cursor(
 }
 
 fn apply_pancam_viewport(
-    mut q_cameras: Query<(&Camera, &mut OrthographicProjection, &GlobalTransform, &mut PancamViewport)>,
+    mut q_cameras: Query<(&mut PancamViewport, &Camera, &GlobalTransform, &mut Transform, &mut OrthographicProjection)>,
 ) {
-    for (camera, projection, transform, mut viewport_pan) in &mut q_cameras {
-        let viewport_size_old = camera.logical_viewport_size().unwrap();
-        let viewport_size_new = camera.world_to_viewport(transform, (viewport_pan.world_size/2.0 + viewport_pan.world_center).extend(1.0));
+    for (viewport_pan, camera, transform, mut transform_local, mut projection) in &mut q_cameras {
+        let viewport_size_old = camera.logical_viewport_size().unwrap_or(Vec2::ONE);
+        let world_center = camera.viewport_to_world_2d(transform, viewport_size_old*0.5).unwrap();
 
-        projection.scale
+        projection.scale = viewport_pan.scale;
+        transform_local.translation += (viewport_pan.center - world_center).extend(0.0);
+    }
+}
 
+pub struct PluginPancam;
 
-        viewport_pan.world_center = camera.viewport_to_world_2d(transform, viewport_size*0.5).unwrap();
-        viewport_pan.world_size   = 2.0*(camera.viewport_to_world_2d(transform, viewport_size).unwrap() - viewport_pan.world_center);
+impl Plugin for PluginPancam {
+    fn build(&self, app: &mut App) {
+        app
+            .add_systems(PreUpdate, (extract_pancam_cursor, extract_pancam_viewport))
+            .add_systems(PostUpdate, apply_pancam_viewport);
     }
 }

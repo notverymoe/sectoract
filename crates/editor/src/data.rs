@@ -5,7 +5,7 @@ pub const LENGTH_MALL:     i16 = UNIT_WORLD_I * 36;
 pub const WIDTH_PLATFORM:  i16 = UNIT_WORLD_I * 3;
 pub const WIDTH_CROSSOVER: i16 = UNIT_WORLD_I * 6;
 
-#[allow(too_many_lines)]
+#[allow(clippy::too_many_lines)]
 #[must_use]
 pub fn get_test_sector() -> Sector {
     SectorBuilder::new()

@@ -50,6 +50,7 @@ use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use sectoract_editor::ui::GridCursor;
 use sectoract_editor::{data, draw, ui};
 use sectoract_level::map::Sector;
+use sectoract_pancam::{PancamCursor, PancamViewport, PluginPancam};
 
 #[derive(Resource)]
 pub struct SectorResource {
@@ -60,6 +61,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(EguiPlugin)
+        .add_plugins(PluginPancam)
         .init_resource::<ui::ScreenLayout>()
         .init_resource::<ui::GridSettings>()
         .init_resource::<ui::GridCursor>()
@@ -73,8 +75,8 @@ fn main() {
         // Systems that create Egui widgets should be run during the `CoreSet::Update` set,
         // or after the `EguiSet::BeginFrame` system (which belongs to the `CoreSet::PreUpdate` set).
         .add_systems(Startup, setup)
-        .add_systems(PreUpdate,  (ui::update_physical_scale, input_grid_size, ui::update_grid_cursor, input_camera).chain())
-        .add_systems(Update,     (ui_build, ui::update_camera_reserved_space).chain())
+        .add_systems(PreUpdate,  (ui::update_physical_scale, input_grid_size, ui::update_grid_cursor).chain())
+        .add_systems(Update,     (input_camera, ui_build, ui::update_camera_reserved_space).chain())
         .add_systems(PostUpdate, (draw_2d_grid, draw_2d_cursor, draw_2d_sector))
         .run();
 }
@@ -82,7 +84,10 @@ fn main() {
 // // Setup // //
 
 fn setup(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default());
+    commands
+        .spawn(Camera2dBundle::default())
+        .insert(PancamViewport::default())
+        .insert(PancamCursor::default());
 }
 
 // // Input // //
@@ -105,14 +110,13 @@ fn input_grid_size(
 fn input_camera(
     r_input_mouse: Res<Input<MouseButton>>,
     r_cursor: Res<GridCursor>,
-    mut q_cameras: Query<(&mut OrthographicProjection, &mut Transform), With<Camera>>,
+    mut q_cameras: Query<&mut PancamViewport>,
     mut scroll_evr: EventReader<MouseWheel>,
     time: Res<Time>,
 ) {
-
     if r_input_mouse.pressed(MouseButton::Middle) {
         let delta = r_cursor.delta_viewport_scaled;
-        q_cameras.single_mut().1.translation -= delta.extend(0.0);
+        q_cameras.single_mut().pan(-delta);
     }
 
     let mut scroll_delta = 0.0;
@@ -124,27 +128,8 @@ fn input_camera(
     }
 
     if scroll_delta != 0.0 {
-        let (mut projection, mut transform) = q_cameras.single_mut();
-        zoom_camera(&mut projection, &mut transform, r_cursor.pos_world, scroll_delta * time.delta_seconds());
+        q_cameras.single_mut().zoom_towards(r_cursor.pos_world, 10.0 * scroll_delta * time.delta_seconds());
     }
-
-}
-
-fn zoom_camera(
-    cam_projection: &mut OrthographicProjection, 
-    cam_transform: &mut Transform, 
-    mouse_world: Vec2,
-    amount: f32
-) {
-    //let old_scale = cam_projection.scale;
-    cam_projection.scale = (cam_projection.scale.ln() + amount).exp();
-
-    //let offset_to_mouse = mouse_world.extend(cam_transform.translation.z) - cam_transform.translation;
-    //let distance_to_mouse = offset_to_mouse.length();
-    //let max_move_dist     = (cam_projection.area.size()/old_scale*cam_projection.scale).length() * 0.25;
-    //let offset_scale      = distance_to_mouse.min(max_move_dist)/distance_to_mouse;
-
-    //cam_transform.translation += offset_to_mouse*offset_scale;
 }
 
 // // Draw // //
